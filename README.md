@@ -1,4 +1,4 @@
-# Welcome to the Grawlix CMS v1.4
+# Welcome to the Grawlix CMS v1.5.1
 The Grawlix CMS is a tool that helps you, a comic artist, publish your own website. But if you’re reading this, then you probably knew that. What you might not know is how to get started. This file will help you along.
 
 # Requirements
