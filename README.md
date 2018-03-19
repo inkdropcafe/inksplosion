@@ -2,7 +2,7 @@
 The Grawlix CMS is a tool that helps you, a comic artist, publish your own website. But if you’re reading this, then you probably knew that. What you might not know is how to get started. This file will help you along.
 
 # Requirements
-The Grawlix CMS requires a web host with PHP5 and MySQL. You’ll need a database on the host before you install the system — check your host’s control panel for details. You will also need a code editor like [Sublime Text](https://www.sublimetext.com/), [Atom](https://atom.io/), or [Coda](https://panic.com/coda/), and FTP app like [FileZilla](https://filezilla-project.org/) or [Transmit](https://panic.com/transmit/). You may also use your webhost's built in FTP or code editing tools.
+The Grawlix CMS requires a web host with PHP5 and MySQL. You’ll need a database on the host before you install the system — check your host’s control panel for details. You will also need a code editor like [Sublime Text](https://www.sublimetext.com/), [Atom](https://atom.io/), or [Notepad++](https://notepad-plus-plus.org/), and FTP app like [FileZilla](https://filezilla-project.org/) or [Transmit](https://panic.com/transmit/). You may also use your webhost's built in FTP or code editing tools.
 
 * [Learn more about the requirements.](http://www.getgrawlix.com/docs/1/ftp) (Comment: This link will need updating)
 * [New to FTP? Check out our quick guide.](http://www.getgrawlix.com/docs/1/requirements) (Comment: This link will need updating)
@@ -39,9 +39,9 @@ Among other changes and fixes, versions 1.3 and 1.4 make significant changes to 
 # More info & support
 * [Start from scratch](http://www.thedaemoschronicles.com/grawlix-cms-setup-walkthrough/): Learn about hosting, databases, and setup with this article by Jordan Rodriguez.
 * [Read the docs](http://www.getgrawlix.com/docs): Learn more about specific topics in the Grawlix CMS.
-* [Ask questions](https://discord.gg/guj9dtV): Seek solutions or share your know-how in the forum.
+* [Ask questions](https://discord.gg/guj9dtV): Seek solutions or share your know-how.
 * [Fear no code](https://gumroad.com/l/SACCb): Expunge your apprehension of HTML and CSS with our guide to coding for webcomic artists.
-* [Give feedback](https://github.com/Respheal/grawlix/issues): Something else on your mind? Got a question or comment? Let us know.
+* [Give feedback](https://github.com/inkdropcafe/inksplosion/issues): Something else on your mind? Got a question or comment? Let us know.
 Happy publishing!
 
-— the Ink Drop/Grawlix Team
+— the Ink Drop Team
