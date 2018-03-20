@@ -138,6 +138,7 @@ function upload_specific_file($which,$path){
 	return array('alert','File failed to upload.');
 }
 
+/*
 function upload_multiple_files($path){
 	if ( $_FILES ) {
 		foreach ( $_FILES as $superkey => $info ) {
@@ -159,6 +160,7 @@ function upload_multiple_files($path){
 		}
 	}
 }
+*/
 
 
 
@@ -259,6 +261,7 @@ function register_variable($variable_name=NULL,$variable_type=NULL){
 }
 
 // Generate a simple Foundation alert box
+/*
 function generate_alert( $class='', $text ) {
 	$output  = '<div data-alert class="alert-box '.$class.'">'."\n";
 	$output .= '	<a href="#" class="close"></a><section>'."\n";
@@ -274,6 +277,7 @@ function generate_alert( $class='', $text ) {
 	$output .= '</section></div>'."\n";
 	return $output;
 }
+*/
 
 
 function get_image_reference($db){
@@ -310,8 +314,12 @@ function interpret_image_weight($value,$bias = 1){
 
 
 
-function build_select_simple($name='',$list=array(), $current=''){
-	$output .= '<select name="'.$name.'" id="'.$name.'">'."\n";
+function build_select_simple($name='',$list=array(), $current='', $style=NULL){
+	if($style)
+	{
+		$style = ' style="'.$style.'"';
+	}
+	$output .= '<select name="'.$name.'" id="'.$name.'"'.$style.'>'."\n";
 	foreach ( $list as $key => $val ) {
 		$current == $key ? $sel = ' selected="selected"' : $sel = '';
 		$output .= '<option value="'.$key.'"'.$sel.'>'.$val.'</option>'."\n";
@@ -320,6 +328,7 @@ function build_select_simple($name='',$list=array(), $current=''){
 	return $output;
 }
 
+/*
 function build_select_val_as_key( $name = '', $list = array(), $current = '' ) {
 	$output .= '<select name="'.$name.'" id="'.$name.'">'."\n";
 	foreach ( $list as $key => $val ) {
@@ -329,7 +338,9 @@ function build_select_val_as_key( $name = '', $list = array(), $current = '' ) {
 	$output .= '</select>'."\n";
 	return $output;
 }
+*/
 
+/*
 function build_radio($name='',$list=array(), $current=''){
 	foreach ( $list as $key => $val ) {
 		$current == $key ? $sel = ' checked="checked"' : $sel = '';
@@ -337,6 +348,7 @@ function build_radio($name='',$list=array(), $current=''){
 	}
 	return $output;
 }
+*/
 
 function fetch_static_page_info($page_id=null,$db){
 	if ( $page_id && is_numeric($page_id) ) {
@@ -384,6 +396,7 @@ function interpret_xml_layout($string){
 
 
 
+/*
 function get_static_pages($db){
   $sql = '
 SELECT
@@ -415,6 +428,7 @@ ORDER BY
 
 	return $static_list;
 }
+*/
 
 function get_site_milieu($db){
 	$cols = array('label, value, id');
@@ -427,6 +441,7 @@ function get_site_milieu($db){
 }
 
 // Exactly what it sounds like.
+/*
 function count_books($db){
 	$result = $db->get ('book',null,'COUNT(id) AS tally');
 	if ( $result ) {
@@ -434,6 +449,7 @@ function count_books($db){
 	}
 	return $result;
 }
+*/
 
 /*
 function get_comic_books($db,$limit=null){
@@ -456,6 +472,7 @@ function get_comic_books($db,$limit=null){
 */
 
 
+/*
 function get_comic_book_info($book_id,$db){
 
 	$sql = "
@@ -480,7 +497,9 @@ WHERE
 	}
 	return $info;
 }
+*/
 
+/*
 function get_last_book_info($db){
 //	$query = "SELECT id,sort_order FROM comic_book ORDER BY sort_order DESC, title ASC LIMIT 1";
 
@@ -490,6 +509,7 @@ function get_last_book_info($db){
 
 	return $result[0];
 }
+*/
 
 /*
 function get_book_pages_by_chapter_id($chapter_id,$db){
@@ -544,6 +564,7 @@ WHERE
 }
 */
 
+/*
 function get_comic_page_info($page_id,$db){
 
 	$sql = "
@@ -575,6 +596,7 @@ WHERE
 	}
 	return $info;
 }
+*/
 
 function get_page_images($page_id,$db){
 	$sql = "
@@ -854,6 +876,7 @@ function get_ad_info($ad_id,$db){
 	return $info;
 }
 
+/*
 function time_calc($start_date='',$limit=10,$frequency='mwf'){
 
 	$start_date ? $start_date : $start_date = date('Y-m-d');
@@ -991,6 +1014,7 @@ function time_calc($start_date='',$limit=10,$frequency='mwf'){
 
 	return $date_list;
 }
+*/
 
 
 // English-savvy quantity indicator.
@@ -1039,6 +1063,27 @@ function get_site_theme($tone_id=1,$db){
 	$db-> where('id',$tone_id);
 	$result = $db->getOne ('theme_tone',null,'theme_id');
 	return $result;
+}
+
+function get_current_theme_directory($db){
+	$sql = "
+SELECT
+	gtl.directory
+FROM
+	".DB_PREFIX."milieu gm,
+	".DB_PREFIX."theme_tone gtt,
+	".DB_PREFIX."theme_list gtl
+WHERE
+	gm.label = 'tone_id'
+	AND gtt.id = gm.value
+	AND gtt.theme_id = gtl.id
+";
+	$result = $db->rawQuery($sql,FALSE,FALSE);
+	if ($result)
+	{
+		return $result[0]['directory'];
+	}
+	return FALSE;
 }
 
 
@@ -1151,6 +1196,7 @@ function display_pretty_publish_frequency($value=''){
 	}
 }
 
+/*
 function delete_static_page($static_page_id,$db){
 
 	$db-> where('id',$static_page_id);
@@ -1160,6 +1206,7 @@ function delete_static_page($static_page_id,$db){
 	$db-> where('rel_type','static');
 	$db-> delete('path');
 }
+*/
 
 function delete_comic_page($comic_page_id,$db){
 
@@ -1428,14 +1475,17 @@ function get_slots($theme_id=null,$type='ad',$db){
 	return $result;
 }
 
+/*
 function get_tones($db){
 	$db->orderBy ('title','ASC');
 	$result = $db->get ('theme_tone',null,'title,theme_id,id');
 	$result = rekey_array($result,'id');
 	return $result;
 }
+*/
 
 // Get everything in the third_data table relating to a given service.
+/*
 function gather_ad_data($service='Project Wonderful',$db){
 	$sql = "
 SELECT
@@ -1454,7 +1504,9 @@ WHERE
 
 	return $list;
 }
+*/
 
+/*
 function fetch_xml_file($filepath=''){
 	if ( is_file ( $filepath) ) {
 		$file_contents = file_get_contents($filepath);
@@ -1464,7 +1516,9 @@ function fetch_xml_file($filepath=''){
 	}
 	return $xml_object;
 }
+*/
 
+/*
 function read_theme_xml($xml_object){
 	if ( $xml_object-> tone ) {
 		foreach ( $xml_object-> tone-> group as $key => $val ) {
@@ -1504,6 +1558,7 @@ function read_theme_xml($xml_object){
 	}
 	return $overall_set;
 }
+*/
 
 function is_image($path)
 {
@@ -1528,4 +1583,118 @@ function is_image_type($str='', $allowed_image_types=array())
 	{
 		return FALSE;
 	}
+}
+
+
+function create_thumbnail( $source_file, $destination_file, $max_dimension)
+{
+	list($img_width,$img_height) = getimagesize($source_file); // Get the original dimentions
+	$aspect_ratio = $img_width / $img_height;
+
+	// What should the new dimensions be?
+	if ( $img_width > $img_height )
+	{
+		$new_width = $max_dimension;
+		$new_height = $new_width / $aspect_ratio;
+	}
+	elseif ( $img_width < $img_height )
+	{
+		$new_height = $max_dimension;
+		$new_width = $new_height * $aspect_ratio;
+	}
+	elseif ( $img_width == $img_height )
+	{
+		$new_width = $max_dimension;
+		$new_height = $max_dimension;
+	}
+	else {
+		return FALSE;
+	}
+	
+	// Make sure these are integers.
+	$new_width = intval($new_width);
+	$new_height = intval($new_height);
+
+	// What kind of file do we have?
+	$extension = explode('.',$source_file);
+	$extension = array_pop($extension);
+	// Get the source file.
+	switch($extension)
+	{
+		case 'gif':
+			@$img_source = imagecreatefromgif($source_file);
+			break;
+		case 'jpg':
+		case 'jpeg':
+			@$img_source = imagecreatefromjpeg($source_file);
+			break;
+		case 'png':
+			@$img_source = imagecreatefrompng($source_file);
+			break;
+		case 'gif':
+			@$img_source = imagecreatefromgif($source_file);
+			break;
+	}
+	
+	// Resample and create the new thumbnail file.
+	if ($img_source)
+	{
+
+		// Create a new image in memory.
+		$thumbnail = imagecreatetruecolor($new_width,$new_height);
+
+		imagecopyresampled($thumbnail, $img_source, 0, 0, 0, 0, $new_width, $new_height, $img_width, $img_height);
+
+
+		switch($extension)
+		{
+			case 'gif':
+				imagegif( $thumbnail, $destination_file, 6 );
+				break;
+			case 'jpg':
+			case 'jpeg':
+				imagejpeg( $thumbnail, $destination_file, 75 );
+				break;
+			case 'png':
+				imagepng( $thumbnail, $destination_file, 6 );
+				break;
+			case 'gif':
+				imagegif( $thumbnail, $destination_file, 6 );
+				break;
+		}
+	
+		// Finally, we destroy the two images in memory.
+		imagedestroy($img_source);
+		imagedestroy($thumbnail);
+		return TRUE;
+	}
+	return FALSE;
+}
+
+function report_image_error($image_info,$error_code)
+{
+	if ( !is_writable('../'.$image_info['directory'])) {
+		return 'Unable to upload image. Looks like a folder permissions problem.';
+		return $alert_output;
+	}
+	else {
+		switch ( $_FILES['error'][$key] ) {
+			case 1:
+				$alert_output = $alert_output = 'I couldn’t upload the image. It exceeded the server’s '.(ini_get( 'upload_max_filesize' )).'B file size limit.';
+				break;
+			case 2:
+				$alert_output = $alert_output = 'I couldn’t upload the image. It exceeded the server’s '.(ini_get( 'upload_max_filesize' )).'B file size limit.';
+				break;
+			case 3:
+				$alert_output = $alert_output = 'I couldn’t receive the image. There was nothing to receive.';
+				break;
+			case 6:
+				$alert_output = $alert_output = 'I couldn’t receive the image. There was no “temp” folder on the server — contact your host.';
+				break;
+			case 8:
+				$alert_output = $alert_output = 'I couldn’t upload the image. It doesn’t look like a PNG, GIF, JPG, JPEG or SVG.';
+				break;
+		}
+	}
+	return $alert_output;
 }
