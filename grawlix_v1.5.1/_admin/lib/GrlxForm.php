@@ -323,6 +323,16 @@ class GrlxForm {
 		$this->maxlength(64);
 	}
 
+	public function input_clickable($str=null) {
+		$this->reset_vars();
+		$this->type = 'text';
+		$this->id = $str;
+		$this->label('Clickable text');
+		$this->required(true);
+		$this->pattern('title');
+		$this->maxlength(64);
+	}
+
 	public function input_email($str=null) {
 		$this->reset_vars();
 		$this->type = 'text';

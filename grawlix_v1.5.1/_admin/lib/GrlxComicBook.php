@@ -16,7 +16,7 @@ class GrlxComicBook {
 			$this-> bookID = $bookID;
 		}
 		else {
-			$this-> getActiveBook();
+			$this-> getFirstBook();
 		}
 		$this-> getInfo();
 /*
@@ -66,6 +66,7 @@ class GrlxComicBook {
 		$result = $this->db
 			->join('marker m','marker_id = m.id')
 			->orderBy('bp.sort_order','ASC')
+			->where('bp.book_id',$this->bookID)
 			->get('book_page bp',null,$cols);
 		$this-> markerList = rekey_array($result,'id');
 	}
@@ -91,15 +92,14 @@ class GrlxComicBook {
 		$this-> lastPage = reset($result);
 	}
 
-	function getActiveBook(){
+	function getFirstBook(){
 		$this-> db-> orderBy ('sort_order','ASC');
-		$list = $this-> db-> get ('book',null,'title,id');
-		if ( count($list) == 1 ) {
-			$this-> bookID = $list[0]['id'];
+		$result = $this-> db-> getOne ('book','title,id');
+		if ( $result ) {
+			$this-> bookID = $result['id'];
 		}
 		else {
-			header('location:book.list.php');
-			die();
+			die('No books in the database.');
 		}
 	}
 
@@ -119,23 +119,5 @@ class GrlxComicBook {
 		$this->db->where('b.id',$this->bookID);
 		$this->db->where('p.url','/','<>');
 		$this->info = $this->db->getOne('book b',$cols);
-	}
-/*
-	function getInfo(){
-		$this-> db-> where('id',$this-> bookID);
-		$info = $this-> db-> get ('book',null,'title,id,options,publish_frequency');
-
-		$this-> db-> where('rel_id',$this-> bookID);
-		$this-> db-> where('rel_type','book');
-		$url_info = $this-> db-> getOne('path',null,'url');
-		$info['url'] = $url_info['url'];
-		$this-> info = $info[0];
-	}
-*/
-	function saveInfo($data=array()){
-		$this-> db -> where('id', $this-> book_id);
-		$this-> db -> update('book', $data);
-		$success = $this-> db -> count;
-		return $success;
 	}
 }

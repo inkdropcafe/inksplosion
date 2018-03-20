@@ -152,6 +152,20 @@ class GrlxXML {
 		return $list;
 	}
 
+	public function getChildNodes($xpath=null) {
+		$this->setXPath($xpath);
+		if ( is_object($xpath) ) {
+			$i = 0;
+			foreach ( $xpath->children() as $item=>$children ) {
+				$i++;
+				foreach ( $children as $key=>$val ) {
+					$list[$item.'-'.$i][$key] = $val;
+				}
+			}
+		}
+		return $list;
+	}
+
 	/**
 	 * Get values of same-named children of node
 	 *

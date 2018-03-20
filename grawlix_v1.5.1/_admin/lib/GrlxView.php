@@ -302,7 +302,7 @@ class GrlxView {
 		}
 		$output .= '</section>';
 		$output .= '<section id="top-btn">';
-		$output .= '<a id="view" href="../"><i></i>View site</a>';
+		$output .= '<a id="view" href="../" target="site"><i></i>View site</a>';
 		$output .= '<a id="logout" href="panl.logout.php"><i></i>Log out</a>';
 		$output .= '</section>';
 		$output .= '</header>';
@@ -346,13 +346,13 @@ class GrlxView {
 				'name' => 'New page',
 				'icon' => 'new'
 			),
-/*
+
 			'2' => array(
-				'file' => 'marker.create.php',
-				'name' => 'New chapter',
-				'icon' => 'new'
+				'file' => 'book.list.php',
+				'name' => 'Bookshelf',
+				'icon' => 'book'
 			),
-*/
+
 			'3' => array(
 				'file' => 'book.view.php',
 				'name' => 'Book view',
@@ -364,6 +364,12 @@ class GrlxView {
 				'icon' => 'arch'
 			)
 		);
+
+		if ( !is_file('book.list.php'))
+		{
+			unset($menu['Comic pages'][2]);
+		}
+
 		$menu['Static pages'] = array(
 			'5' => array(
 				'file' => 'sttc.page-new.php',
@@ -388,9 +394,14 @@ class GrlxView {
 				'icon' => 'social'
 			),
 			'9' => array(
-			'file' => 'site.theme-manager.php',
-			'name' => 'Themes',
-			'icon' => 'theme'
+				'file' => 'site.theme-manager.php',
+				'name' => 'Themes',
+				'icon' => 'theme'
+			),
+			'15' => array(
+				'file' => 'media.list.php',
+				'name' => 'Media library',
+				'icon' => 'image'
 			),
 			'10' => array(
 				'file' => 'ad.list.php',
@@ -424,14 +435,13 @@ class GrlxView {
 				'name' => 'Index',
 				'icon' => 'book'
 			)
-/*
-			'15' => array(
-				'file' => 'site.feeds.php',
-				'name' => 'Feeds',
-				'icon' => 'feeds'
-			)
-*/
 		);
+
+		if ( !is_file('media.list.php'))
+		{
+			unset($menu['Site'][15]);
+		}
+
 		return $menu;
 	}
 
@@ -736,27 +746,6 @@ class GrlxView {
 	public function meta_info_list($arr) {
 		$this->meta_info_list = $arr;
 	}
-
-	/**
-	 * Formats the meta key/value pairs
-	 *
-	 * @return string - html for meta list
-	 */
-/*
-	protected function format_meta_rows() {
-		if ( $this->meta_info_list ) {
-			foreach ( $this->meta_info_list as $key => $val ) {
-				$output .= '<div class="row">';
-				$output .= '<div class="medium-4 columns">';
-				$output .= ucfirst($key);
-				$output .= $val;
-				$output .= '</div>';
-				$output .= '</div>';
-			}
-		}
-		return $output;
-	}
-*/
 
 	/**
 	 * Call this function to assemble the meta section
