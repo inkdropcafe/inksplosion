@@ -4,7 +4,7 @@
  * Specific to front-end archives
  */
 
-class GrlxPage_Archive extends GrlxPage {
+class GrlxPage2_Archive extends GrlxPage2 {
 
 	protected $xml;
 	protected $xmlVersion;
@@ -15,45 +15,46 @@ class GrlxPage_Archive extends GrlxPage {
 	protected $layout;
 	protected $meta;
 	protected $showArchiveNav;
+	protected $markerCount = 1;
 
 	/**
 	 * Set defaults, etc.
 	 */
 	public function __construct() {
-		parent::__construct(func_get_args());
-		$this->template = $this->templateFileList['archive'];
-		if ( $this->path[1] != $this->bookInfo['url'] ){
-			$this->getBookInfo('url');
+		parent::__construct();
+	}
+
+	/**
+	 * Use page request to determine correct action.
+	 *
+	 * @param		object		$grlxRequest
+	 */
+	public function contents($request)
+	{
+		parent::contents($request);
+
+		if (is_array($request->query))
+		{
+			// If given sort order, get the matching marker
+			if (array_key_exists('sort_order', $request->query))
+			{
+				$this->chapterNum = $request->query['sort_order'];
+			}
 		}
+
 		$this->theme['tone_id'] = $this->bookInfo['tone_id'];
-		$this->pageInfo['permalink'] = $this->path[1].$this->path[2];
-		$this->getChapterNum();
+		$this->pageInfo['permalink'] = $this->bookInfo['archive_url'];
+
 		if ( $this->chapterNum ) {
 			$this->pageInfo['permalink'] .= '/'.$this->chapterNum;
 		}
+
 		if ( substr($this->bookInfo['options'], 0,5) == '<?xml' ) {
 			$args['stringXML'] = $this->bookInfo['options'];
 			$this->xml = new GrlxXMLPublic($args);
 			$this->xmlVersion = $this->xml->version;
 			$this->routeVersion();
 			$this->routeBehaviorOptions();
-		}
-	}
-
-	/**
-	 * Get the chapter number from a request formatted “/comic/archive?1” or “/comic/options/archive/1”
-	 */
-	protected function getChapterNum() {
-		if ( $this->query ) {
-			$id = array_keys($this->query);
-			$this->chapterNum = $id[0];
-		}
-		else {
-			$x = $this->path[3];
-			remove_first_slash($x);
-			if ( is_numeric($x) ) {
-				$this->chapterNum = $x;
-			}
 		}
 	}
 
@@ -79,15 +80,18 @@ class GrlxPage_Archive extends GrlxPage {
 	/**
 	 * Action for the different layout settings
 	 */
-	protected function routeBehaviorOptions() {
-		switch ( $this->layout['behavior'] ) {
+	protected function routeBehaviorOptions()
+	{
+		switch ( $this->layout['behavior'] )
+		{
 			case 'single':
 				unset($this->chapterNum);
 				$this->getPages();
 				break;
 			case 'multi':
 				$this->layout['behavior'] = 'multi';
-				if ( is_numeric($this->chapterNum) ) {
+				if ( is_numeric($this->chapterNum) )
+				{
 					$this->getPageRange();
 					$this->getPages();
 				}
@@ -104,6 +108,8 @@ class GrlxPage_Archive extends GrlxPage {
 	 * Get sort position of requested chapter and the one that follows
 	 */
 	protected function getPageRange() {
+		$book_id = $this->bookInfo['id'];
+
 		$cols = array(
 			'id',
 			'sort_order'
@@ -112,10 +118,13 @@ class GrlxPage_Archive extends GrlxPage {
 			$this->chapterNum - 1,
 			2
 		);
+
 		$result = $this->db
+			->where('book_id',$book_id)
 			->where('marker_id',1,'>=')
 			->orderBy('sort_order','ASC')
 			->get('book_page',$limit,$cols);
+
 		$this->range['start'] = $result[0]['sort_order'];
 		$this->range['end'] = $result[1]['sort_order'];
 	}
@@ -195,6 +204,7 @@ class GrlxPage_Archive extends GrlxPage {
 		}
 		$this->db->orderBy('bp.sort_order','ASC');
 		$result = $this->db->get('book_page bp',null,$bpCol);
+
 		if ( $result ) {
 			$this->currentList = $result;
 		}
@@ -269,6 +279,7 @@ class GrlxPage_Archive extends GrlxPage {
 					$list[$i] = array(
 						'marker_id'      => $page['marker_id'],
 						'marker_title'   => $page['marker_title'],
+						'marker_description' => $page['marker_description'],
 						'marker_img'     => $page['marker_img'],
 						'marker_img_alt' => $page['marker_img_alt'],
 						'marker_rank'    => $page['rank'],
@@ -390,6 +401,12 @@ class GrlxPage_Archive extends GrlxPage {
 		// Only multi needs links for the chapters
 		$this->layout['behavior'] == 'multi' ? $url = $this->buildPermalink($x,'archive') : $url = null;
 
+		// Number
+		if ( $this->meta['chapters'] && in_array('number', $this->meta['chapters']) ) {
+			$text[] = $this->markerCount.'. ';
+			$this->markerCount++;
+		}
+
 		// Title
 		if ( $this->meta['chapters'] && in_array('title', $this->meta['chapters']) ) {
 			$text[] = '<span class="title archive-level-'.$info['marker_rank'].'">'.$info['marker_title'].'</span>';
@@ -401,9 +418,13 @@ class GrlxPage_Archive extends GrlxPage {
 		if ( $url ) {
 			$text = '<a href="'.$url.'">'.$text.'</a>';
 		}
+		// Description
+		if ( $this->meta['chapters'] && in_array('description', $this->meta['chapters']) ) {
+			$desc = '<p>'.$info['marker_description'].'</p>';
+		}
 		if ( $image || $text )
 		{
-			$link = '<li class="item chapter"><h3>'.$image.$text.'</h3></li>';
+			$link = '<li class="item chapter"><h3>'.$image.$text.'</h3>'.$desc.'</li>';
 		}
 		return $link;
 	}
@@ -414,6 +435,7 @@ class GrlxPage_Archive extends GrlxPage {
 		{
 			$url = $this->buildPermalink($x,'archive');
 		}
+/*
 		else
 		{
 			$first_page = reset($info['pages']);
@@ -423,6 +445,7 @@ class GrlxPage_Archive extends GrlxPage {
 				$url .= '-'.$first_page['options'];
 			}
 		}
+*/
 
 		// Marker image (only for the main archives page)
 		if ( !is_numeric($this->chapterNum) )
@@ -437,6 +460,11 @@ class GrlxPage_Archive extends GrlxPage {
 
 		if ( !is_numeric($this->chapterNum) ) {
 
+			// Number
+			if ( $this->meta['chapters'] && in_array('number', $this->meta['chapters']) ) {
+				$text[] = $this->markerCount.'. ';
+				$this->markerCount++;
+			}
 			// Title
 			if ( $this->meta['chapters'] && in_array('title', $this->meta['chapters']) ) {
 				$text[] = $info['marker_title'];
@@ -448,9 +476,13 @@ class GrlxPage_Archive extends GrlxPage {
 			if ( $url ) {
 				$text = '<a href="'.$url.'">'.$text.'</a>';
 			}
+			// Description
+			if ( $this->meta['chapters'] && in_array('description', $this->meta['chapters']) ) {
+				$desc = '<p>'.$info['marker_description'].'</p>';
+			}
 			if ( $image || $text )
 			{
-				$link = '<li class="archive-marker archive-level-'.$info['marker_rank'].'">'."\n".'<header>'.$image."\n<h3>".$text.'</h3>'."\n".'</header>'."\n";
+				$link = '<li class="archive-marker archive-level-'.$info['marker_rank'].'">'."\n".'<header>'.$image."\n<h3>".$text.'</h3>'."$desc\n".'</header>'."\n";
 			}
 		}
 		return $link;
@@ -465,7 +497,10 @@ class GrlxPage_Archive extends GrlxPage {
 	 */
 	protected function formatPageItem1($num=null,$info=null) {
 		$url = $this->buildPermalink($num,'page');
-
+		// Thumbnail
+		if ( in_array('image', $this->meta['pages']) && $info['page_img'] ) {
+			$image = '<a class="thumb" href="'.$url.'"><img src="'.$info['page_img'].'" alt="'.$info['page_img_alt'].'" /></a>';
+		}
 		// Page number
 		if ( in_array('number', $this->meta['pages']) && $num ) {
 			$page = 'Page '.$num.' ';
@@ -502,22 +537,7 @@ class GrlxPage_Archive extends GrlxPage {
 		}
 		// Thumbnail
 		if ( in_array('image', $this->meta['pages']) && $info['page_img'] ) {
-			$path = explode('/',$info['page_img']);
-			array_pop($path);
-			$path = implode('/',$path);
-			$filename = basename($info['page_img']);
-			$extension = explode('.',$filename);
-			$extension = array_pop($extension);
-
-			$thumb_filename = 'thumb.'.$extension;
-			if (substr($info['page_img'],0,4) != 'http' && is_file('.'.$path.'/'.$thumb_filename))
-			{
-				$image = '<img src="'.$path.'/'.$thumb_filename.'" alt="'.$info['page_img_alt'].'" />';
-			}
-			else
-			{
-				$image = '';
-			}
+			$image = '<a class="thumb" href="'.$url.'"><img src="'.$info['page_img'].'" alt="'.$info['page_img_alt'].'" /></a>';
 		}
 		// Page number
 		if ( in_array('number', $this->meta['pages']) && $num ) {
@@ -538,9 +558,9 @@ class GrlxPage_Archive extends GrlxPage {
 			}
 		}
 		if ( $page || $title || $date ) {
-			$text = '<a href="'.$url.'">'.$image.$page.$title.$date.'</a>';
+			$text = '<a href="'.$url.'">'.$page.$title.$date.'</a>';
 		}
-		$link = '<li class="archive-page">'.$text.'</li>'."\n";
+		$link = '<li class="archive-page">'.$image.$text.'</li>'."\n";
 		return $link;
 	}
 }

@@ -1,10 +1,10 @@
 <?php
 
 /**
- * Specific to JSON feeds
+ * Specific to RSS feeds
  */
 
-class GrlxPage_JSON extends GrlxPage {
+class GrlxPage2_JSON extends GrlxPage2 {
 
 	protected $xml;
 	protected $xmlVersion;
@@ -16,11 +16,18 @@ class GrlxPage_JSON extends GrlxPage {
 	 * Set defaults, etc.
 	 */
 	public function __construct() {
+		parent::__construct();
+	}
 
-		parent::__construct(func_get_args());
+	/**
+	 * Use page request to determine correct action.
+	 *
+	 * @param		object		$grlxRequest
+	 */
+	public function contents($request)
+	{
+		parent::contents($request);
 
-		// Get XML feed options for this book.
-		$this->setBook();
 		if ( substr($this->bookInfo['options'], 0,5) == '<?xml' ) {
 			$args['stringXML'] = $this->bookInfo['options'];
 			$this->xml = new GrlxXMLPublic($args);
@@ -31,34 +38,6 @@ class GrlxPage_JSON extends GrlxPage {
 		// A few defaults, just in case.
 		if ( !$this->display ) {
 			$this->display = array('title','number');
-		}
-	}
-
-	/**
-	 * Get requested book if it's not the default
-	 */
-	protected function setBook() {
-		if ($this->query['id'] && is_numeric($this->query['id']))
-		{
-			$book_id = $this->query['id'];
-		}
-		else
-		{
-			$book_id = 1; // HARDCODED for testing.
-		}
-
-		// Root folder or subfolder?
-		if ( $this->path[1] == '/json') {
-			if ( $book_id ) {
-				$this->getBookInfo('id',$book_id);
-			}
-			else
-			{
-				$this->getBookInfo();
-			}
-		}
-		elseif ( $this->path[2] == '/json' && $this->path[1] != $this->bookInfo['url'] ) {
-			$this->getBookInfo('url');
 		}
 	}
 
@@ -109,7 +88,7 @@ class GrlxPage_JSON extends GrlxPage {
 
 				if ( in_array('image', $this->display) )
 				{
-					
+
 					// Get the related images.
 					$cols = array(
 						'ir.id',
@@ -163,7 +142,7 @@ class GrlxPage_JSON extends GrlxPage {
 
 				// Any other text
 				$text = array(); // reset
-	
+
 				if ( in_array('description', $this->display) && $array['description'])
 				{
 					$text[] = '<p>'.$array['description'].'</p>';

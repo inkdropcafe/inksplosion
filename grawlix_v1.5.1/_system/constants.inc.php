@@ -2,7 +2,7 @@
 
 /* ! Grawlix * * * * * * * */
 
-define('GRAWLIX_VERSION', '1.4');
+define('GRAWLIX_VERSION', '1.5.1');
 define('DOCS_VERSION', '1');
 define('DB_PREFIX', 'grlx_');
 

@@ -4,7 +4,7 @@
  * Specific to front-end static pages
  */
 
-class GrlxPage_Static extends GrlxPage {
+class GrlxPage2_Static extends GrlxPage2 {
 
 	protected $load404;
 	protected $xml;
@@ -23,12 +23,31 @@ class GrlxPage_Static extends GrlxPage {
 	 * Set defaults, etc.
 	 */
 	public function __construct() {
-		parent::__construct(func_get_args());
-		$this->template = $this->templateFileList['static'];
-		$this->getStaticPage();
-		if ( !$this->pageInfo ) {
-			die('<h1>Oops.</h1><p>Could not get page info for "'.$this->path.'".</p>');
+		parent::__construct();
+	}
+
+	/**
+	 * Use page request to determine correct action.
+	 *
+	 * @param		object		$grlxRequest
+	 */
+	public function contents($request)
+	{
+		parent::contents($request);
+
+		if (is_numeric($this->u_id))
+		{
+			$this->getStaticPageByID($this->u_id);
 		}
+		else
+		{
+			// ????????
+		}
+
+		if ( !$this->pageInfo ) {
+			die('<h1>Oops.</h1><p>Could not get page info for "'.$request->path.'".</p>');
+		}
+
 		if ( substr($this->pageInfo['options'], 0,5) == '<?xml' ) {
 			$args['stringXML'] = $this->pageInfo['options'];
 			$this->xml = new GrlxXMLPublic($args);
@@ -52,6 +71,30 @@ class GrlxPage_Static extends GrlxPage {
 		}
 	}
 
+	/**
+	 * Get page content based on id
+	 */
+	protected function getStaticPageByID($id) {
+		$cols = array(
+			'sp.id',
+			'sp.title AS page_title',
+			'description AS meta_description',
+			'options',
+			'tone_id',
+			'layout',
+			'url AS permalink'
+		);
+		$this->pageInfo = $this->db
+			->join('static_page sp','p.rel_id = sp.id','INNER')
+			->where('p.rel_type','static')
+			->where('sp.id',$id)
+			->getOne('path p',$cols);
+		if ( $this->pageInfo['tone_id'] ) {
+			$this->theme['tone_id'] = $this->pageInfo['tone_id'];
+		}
+		$this->pageInfo['edit_this']['text'] = 'Edit static page';
+		$this->pageInfo['edit_this']['link'] = 'sttc.page-edit.php?page_id='.$this->pageInfo['id'];
+	}
 
 	protected function assembleBlocks($content_blocks=array())
 	{
@@ -72,17 +115,10 @@ class GrlxPage_Static extends GrlxPage {
 			->getOne('theme_tone t',$cols);
 	}
 
-	// Get the page’s default pattern.
-	$pattern_filename_1 = DIR_THEMES.'/'.$theme_info['directory'].'/pattern.'.$this->pageInfo['pattern'].'.html';
-	$pattern_filename_2 = DIR_THEMES.'/'.$theme_info['directory'].'/pattern.'.$this->pageInfo['pattern'].'.php';
-
-	if (is_file($pattern_filename_1))
+	$pattern_filename = DIR_THEMES.'/'.$theme_info['directory'].'/pattern.'.$this->pageInfo['pattern'].'.php';
+	if (is_file($pattern_filename))
 	{
-		$default_page_pattern = file_get_contents($pattern_filename_1);
-	}
-	elseif (is_file($pattern_filename_2))
-	{
-		$default_page_pattern = file_get_contents($pattern_filename_2);
+		$pattern_code_original = file_get_contents($pattern_filename);
 	}
 
 	if ($this->layout['layout'] == 'grid')
@@ -97,22 +133,10 @@ class GrlxPage_Static extends GrlxPage {
 		{
 			foreach ( $content_blocks as $key => $val )
 			{
-				if ($val['pattern'] && $val['pattern'] != '')
-				{
-					$pattern_filename = DIR_THEMES.'/'.$theme_info['directory'].'/pattern.'.$val['pattern'].'.php';
-					if (is_file($pattern_filename))
-					{
-						$pattern_code = file_get_contents($pattern_filename);
-					}
-				}
-				else
-				{
-					$pattern_code = $default_page_pattern;
-				}
-
-				if ( $pattern_code )
+				if ( $pattern_code_original)
 				{
 					$val['content'] = $this->styleMarkdown($val['content']);
+					$pattern_code = $pattern_code_original;
 					$pattern_code = str_replace('{title}',$val['title'],$pattern_code);
 					$pattern_code = str_replace('{link}',$val['url'],$pattern_code);
 					$pattern_code = str_replace('{image}',$val['image'],$pattern_code);

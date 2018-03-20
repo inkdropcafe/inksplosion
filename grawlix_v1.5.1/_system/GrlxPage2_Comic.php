@@ -4,7 +4,7 @@
  * Specific to front-end comic pages
  */
 
-class GrlxPage_Comic extends GrlxPage {
+class GrlxPage2_Comic extends GrlxPage2 {
 
 	protected $where;
 	protected $orderBy;
@@ -15,18 +15,39 @@ class GrlxPage_Comic extends GrlxPage {
 	/**
 	 * Set defaults, etc.
 	 */
-	public function __construct($args) {
-		parent::__construct(func_get_args());
-		$this->template = $this->templateFileList['comic'];
+	public function __construct() {
+		parent::__construct();
+	}
+
+	/**
+	 * Use page request to determine correct action.
+	 *
+	 * @param		object		$grlxRequest
+	 */
+	public function contents($request)
+	{
+		parent::contents($request);
+
+		if (is_array($request->query))
+		{
+			// Get a page by its sort order
+			if (array_key_exists('sort_order', $request->query))
+			{
+				$this->where['sort_order'] = $request->query['sort_order'];
+			}
+			$this->getComicPage();
+		}
+		// Load comic home
+		else
+		{
+			$this->getComicHome();
+		}
 	}
 
 	/**
 	 * Shortcut for a comic’s home page
 	 */
 	public function getComicHome() {
-		if ( $this->path[1] && $this->path[1] != $this->bookInfo['url'] && $this->path[1] != '/index.php' ) {
-			$this->getBookInfo('url');
-		}
 		$this->canonicalLink = $this->bookInfo['url']; // Don’t use a comic page for the comic home canonical link
 		$this->where['sort_order'] = $this->bookInfo['latest_page'];
 		$this->isLatest = true;
@@ -147,8 +168,8 @@ class GrlxPage_Comic extends GrlxPage {
 		else {
 			// A quick page not found view for when a page outside of the published set is requested
 			$this->template = $this->templateFileList['static'];
-			$this->pageInfo['page_content']  = '<h2>Page not found!</h2>';
-			$this->pageInfo['page_content'] .= '<p>Maybe it doesn’t exist, or maybe you’re not allowed to see it yet.</p>';
+			$this->pageInfo['page_content']  = '<h2>Page '.$sortRequest.' not found!</h2>';
+			$this->pageInfo['page_content'] .= '<p>Maybe it doesn’t exist. Or maybe you’re not allowed to see it yet.</p>';
 		}
 		if ( $result['tone_id'] ) {
 			$this->theme['tone_id'] = $result['tone_id'];
@@ -165,11 +186,11 @@ class GrlxPage_Comic extends GrlxPage {
 		$next = $this->pageInfo['sort_order'] + 1;
 
 		// Set some defaults.
-		$navLinks['first']['url']     = $this->bookInfo['url'];
-		$navLinks['prev']['url']      = $this->bookInfo['url'];
-		$navLinks['rand']['url']      = $this->bookInfo['url'].'?sort=random';
-		$navLinks['next']['url']      = $this->bookInfo['url'];
-		$navLinks['latest']['url']    = $this->bookInfo['url'];
+		$navLinks['first']['url']     = $this->milieu['directory'].$this->bookInfo['url'];
+		$navLinks['prev']['url']      = $this->milieu['directory'].$this->bookInfo['url'];
+		$navLinks['rand']['url']      = $this->milieu['directory'].$this->bookInfo['url'].'?sort=random';
+		$navLinks['next']['url']      = $this->milieu['directory'].$this->bookInfo['url'];
+		$navLinks['latest']['url']    = $this->milieu['directory'].$this->bookInfo['url'];
 
 		// Pages after sort_order 1
 		if ( !$this->isFirst ) {
@@ -180,7 +201,7 @@ class GrlxPage_Comic extends GrlxPage {
 		// Nav links before the most recent comic page
 		if ( !$this->isLatest ) {
 			$navLinks['next']['url']   .= '/'.$next;
-			$navLinks['latest']['url'] .= '?sort=latest';
+			$navLinks['latest']['url'] .= '/';
 		}
 
 		// The first comic page

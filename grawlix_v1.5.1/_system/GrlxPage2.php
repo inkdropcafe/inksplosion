@@ -7,9 +7,10 @@
  * $grlxPage = new GrlxPage;
  */
 
-class GrlxPage {
+class GrlxPage2 {
 
 //	protected $httpHeader = 'Content-Type: text/html; charset=utf-8';
+	protected $u_id = NULL;
 	protected $db;
 	protected $isHome;
 	protected $isAdmin;
@@ -41,59 +42,73 @@ class GrlxPage {
 
 	/**
 	 * Setup, set defaults, etc.
+	 *
 	 */
-	public function __construct($args = NULL) {
+	public function __construct() {
 		global $_db;
 		$this->db = $_db;
+
 		if ( $this->httpHeader )
 		{
 			header($this->httpHeader);
 		}
+	}
 
-		$this->getArgs(func_get_args(),2);
+	/**
+	 * Move stuff out of the constructor.
+	 *
+	 * @param		array		$args
+	 * @param		object		$route
+	 */
+	public function setup($args = NULL, $route = NULL) {
+
 		$this->setTemplateFiles();
-		$this->domainName = $_SERVER['HTTP_HOST'];
-		if ( $this->path ) {
-			$this->getBookInfo('url');
-			$str = implode('', $this->path);
-			$str = str_replace('//','/',$str);
-			$this->request = $str;
-		}
-		if ( count($this->path) == 1 || $this->path[1] == '/index.php' ) {
 
-			// Which is the default book?
-			$this->db->where('url','/');
-			$book_id = $this->db->getOne('path','rel_id');
-			if ($book_id && $book_id['rel_id'] && is_numeric($book_id['rel_id']))
-			{
-				$this->getBookInfo('id',$book_id['rel_id']);
+		// Pass in site info from db
+		if ($args)
+		{
+			foreach ( $args as $key => $val ) {
+				if ( property_exists($this, $key) ) {
+					$this->{$key} = $val;
+				}
 			}
-			else
-			{
-				$this->getBookInfo();
-			}
-			$this->isHome = true;
 		}
+
+		// Check the given route data
+		if (is_object($route))
+		{
+			// Template type
+			if (strlen($route->template) > 0)
+			{
+				$this->template = $this->templateFileList[$route->template];
+			}
+
+			// Check for a u_id
+			if (is_numeric($route->u_id))
+			{
+				$this->u_id = $route->u_id;
+			}
+
+			// Set the book_id
+			is_numeric($route->book_id) ? $id = $route->book_id : $id = 1;
+			$this->getBookInfo($route->book_id);
+		}
+
+		$this->domainName = $_SERVER['HTTP_HOST'];
 		$this->permalinkFormat = explode('/',$this->milieu['permalink_format']);
 		array_shift($this->permalinkFormat);
 		$this->filebase = $this->milieu['home_url'];
 	}
 
 	/**
-	 * Pass in any arguments, currently only the page request
+	 * Set some vars from $grlxRequest
 	 *
-	 * @param array $list - arguments from index.php
-	 * @param integer $level - depending on how many times func_get_args() is used, vars will be in different levels
+	 * @param		object		$grlxRequest
+	 * @vars			string		$request
 	 */
-	protected function getArgs($list=null,$level=2) {
-		$level == 2 ? $list = $list[0][0] : $list = $list[0];
-		if ( isset($list) ) {
-			foreach ( $list as $key=>$val ) {
-				if ( property_exists($this, $key) ) {
-					$this->{$key} = $val;
-				}
-			}
-		}
+	public function contents($request)
+	{
+		$this->request = $request->path;
 	}
 
 	/**
@@ -112,12 +127,11 @@ class GrlxPage {
 	/**
 	 * Get book info with url slug and latest page's sort order
 	 *
-	 * @param string $property - what to query by: default,url,id
-	 * @param string $value - value to match in where clause
 	 */
-	protected function getBookInfo($property='default',$value=null) {
+	protected function getBookInfo($id = NULL)
+	{
+		$id < 1 ? $id = 1 : $id;
 
-		// Which is the default home?
 		$cols = array(
 			'b.id',
 			'b.title',
@@ -126,43 +140,20 @@ class GrlxPage {
 			'b.sort_order',
 			'b.publish_frequency',
 			'b.options',
-			'MAX(bp.sort_order) AS latest_page',
+			'bp.sort_order AS latest_page',
 			'p.url'
 		);
-		$this->db->join('book_page bp','b.id = bp.book_id','INNER');
-		$this->db->join('path p','b.id = p.rel_id','INNER');
+		$this->db->join('book_page bp', 'b.id = bp.book_id', 'INNER');
+		$this->db->join('path p', 'b.id = p.rel_id', 'INNER');
+		$this->db->where('p.rel_type', 'book');
+		$this->db->where('p.url', '/', '<>');
 		$this->db->where('bp.date_publish <= NOW()');
-		$this->db->where('p.rel_type','book');
-		if ( $property == 'url' ) {
-			$this->db->where('p.url',$this->path[1]);
-		}
-		if ( $property == 'id' ) {
-			$this->db->where('b.id',$value);
-		}
-		$this->db->where('p.url','/','<>');
-		$this->db->orderBy('b.sort_order','ASC');
-		$result = $this->db->getOne('book b',$cols);
+		$this->db->where('b.id', $id);
+		$this->db->orderBy('bp.sort_order', 'DESC');
 
-		if ( $this->menu ) {
-			foreach ( $this->menu as $list ) {
-				$x = mb_strlen($result['url']);
-				if ( mb_substr($list['url'],0,$x,"UTF-8") == $result['url'] && $list['rel_type'] == 'archive' ) {
-					$result['archive_url'] = $list['url'];
-				}
-			}
-		}
-
-		// $result['url'] = $this->milieu['directory'].$result['url'];
-
-		// Work out combinations so we don’t introduce redundant path parts.
-		$result['url'] = $this->milieu['directory'].$result['url'];
-
-		// For good measure in certain edge cases. You know who you are.
-		$result['url'] = str_replace('///', '/', $result['url']);
-		$result['url'] = str_replace('//', '/', $result['url']);
-
-		$result['archive_url'] = $this->milieu['directory'].$result['archive_url'];
-		$result['archive_url'] = str_replace('//', '/', $result['archive_url']);
+		$result = $this->db->getOne('book b', $cols);
+		$result['latest_page'] = (integer) $result['latest_page'];
+		$result['archive_url'] = $result['url'].'/archive';
 
 		$this->bookInfo = $result;
 	}
@@ -412,26 +403,24 @@ class GrlxPage {
 	}
 
 	/**
-	 * Build permalink according to milieu setting
+	 * New function ignores permalink_format since its baked-in for now
 	 *
 	 * @param integer $val - depending on type, number's use changes
 	 * @param string $type - archive, page
 	 * @return string $str - path
 	 */
-	protected function buildPermalink($val=null,$type='page') {
-		if ( !$this->milieu['permalink_format'] ) {
-			$this->milieu['permalink_format'] = '/slug/sort';
-		}
-		if ( $type == 'archive' ) {
+	protected function buildPermalink($val = null, $type = 'page')
+	{
+		if ($type == 'archive')
+		{
 			$str = $this->request.'/'.$val; // Chapter number
 		}
-		if ( $type == 'page' ) {
-			$key['slug'] = $this->bookInfo['url'];
-			$key['sort'] = '/'.$val;
-			foreach ( $this->permalinkFormat as $part ) {
-				$str .= $key[$part];
-			}
+
+		if ($type == 'page')
+		{
+			$str = $this->bookInfo['url'].'/'.$val;
 		}
+
 		return $str;
 	}
 

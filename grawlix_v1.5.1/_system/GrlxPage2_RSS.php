@@ -4,7 +4,7 @@
  * Specific to RSS feeds
  */
 
-class GrlxPage_RSS extends GrlxPage {
+class GrlxPage2_RSS extends GrlxPage2 {
 
 	protected $xml;
 	protected $xmlVersion;
@@ -16,47 +16,28 @@ class GrlxPage_RSS extends GrlxPage {
 	 * Set defaults, etc.
 	 */
 	public function __construct() {
+		parent::__construct();
+	}
 
-		parent::__construct(func_get_args());
+	/**
+	 * Use page request to determine correct action.
+	 *
+	 * @param		object		$grlxRequest
+	 */
+	public function contents($request)
+	{
+		parent::contents($request);
 
-
-		$this->setBook();
 		if ( substr($this->bookInfo['options'], 0,5) == '<?xml' ) {
 			$args['stringXML'] = $this->bookInfo['options'];
 			$this->xml = new GrlxXMLPublic($args);
 			$this->xmlVersion = $this->xml->version;
 			$this->routeVersion();
 		}
+
+		// A few defaults, just in case.
 		if ( !$this->display ) {
 			$this->display = array('title','number');
-		}
-	}
-
-	/**
-	 * Get requested book if it's not the default
-	 */
-	protected function setBook() {
-		if ($this->query['id'] && is_numeric($this->query['id']))
-		{
-			$book_id = $this->query['id'];
-		}
-		else
-		{
-			$book_id = 1; // HARDCODED for testing.
-		}
-
-		// Root folder or subfolder?
-		if ( $this->path[1] == '/rss') {
-			if ( $book_id ) {
-				$this->getBookInfo('id',$book_id);
-			}
-			else
-			{
-				$this->getBookInfo();
-			}
-		}
-		elseif ( $this->path[2] == '/rss' && $this->path[1] != $this->bookInfo['url'] ) {
-			$this->getBookInfo('url');
 		}
 	}
 
@@ -138,40 +119,37 @@ class GrlxPage_RSS extends GrlxPage {
 	 * Arrange and add any HTML to appropriate items
 	 */
 	protected function formatFeedItems() {
-		if($this->feedItems)
-		{
-			foreach ( $this->feedItems as $i=>$array ) {
-				// Item title
-				$title = 'Page '.$array['sort_order'];
-				$array['title'] ? $title .= ': '.$array['title'] : $title;
-				$this->feedItems[$i]['title'] = $title;
-				// Any other text
-				$text = array();
-	
-				if ( in_array('image', $this->display) && $array['image_info'] && count($array['image_info']) > 0)
-				{
-					$text[] = '<img src="http://'.$this->domainName.$array['image_info'][0]['url'].'" alt="'.$array['title'].'">';
-				}
-				if ( in_array('description', $this->display) && $array['description'])
-				{
-					$text[] = '<p>'.$array['description'].'</p>';
-				}
-				if ( in_array('blog', $this->display) && $array['blog_post'])
-				{
-					$text[] = '<h3>'.$array['blog_title'].'</h3>';
-					$this->styleMarkdown($array['blog_post']);
-					$text[] = $array['blog_post'];
-				}
-				if ( in_array('transcript', $this->display) && $array['transcript'])
-				{
-					$this->styleMarkdown($array['transcript']);
-					$text[] = $array['transcript'];
-				}
-				$text ? $text = implode('',$text) : $text = '';
-				// Add source info in case of content scrapers
-				$text .= '<p>This content originally published by '.$this->milieu['artist_name'].' at <a href="'.$array['permalink'].'">'.$this->bookInfo['title'].'</a>.</p>';
-				$this->feedItems[$i]['description'] = $text;
+		foreach ( $this->feedItems as $i=>$array ) {
+			// Item title
+			$title = 'Page '.$array['sort_order'];
+			$array['title'] ? $title .= ': '.$array['title'] : $title;
+			$this->feedItems[$i]['title'] = $title;
+			// Any other text
+			$text = array();
+
+			if ( in_array('image', $this->display) && $array['image_info'] && count($array['image_info']) > 0)
+			{
+				$text[] = '<img src="http://'.$this->domainName.$array['image_info'][0]['url'].'" alt="'.$array['title'].'">';
 			}
+			if ( in_array('description', $this->display) && $array['description'])
+			{
+				$text[] = '<p>'.$array['description'].'</p>';
+			}
+			if ( in_array('blog', $this->display) && $array['blog_post'])
+			{
+				$text[] = '<h3>'.$array['blog_title'].'</h3>';
+				$this->styleMarkdown($array['blog_post']);
+				$text[] = $array['blog_post'];
+			}
+			if ( in_array('transcript', $this->display) && $array['transcript'])
+			{
+				$this->styleMarkdown($array['transcript']);
+				$text[] = $array['transcript'];
+			}
+			$text ? $text = implode('',$text) : $text = '';
+			// Add source info in case of content scrapers
+			$text .= '<p>This content originally published by '.$this->milieu['artist_name'].' at <a href="'.$array['permalink'].'">'.$this->bookInfo['title'].'</a>.</p>';
+			$this->feedItems[$i]['description'] = $text;
 		}
 	}
 
@@ -189,25 +167,22 @@ class GrlxPage_RSS extends GrlxPage {
 		$output .= '		<link>http://'.$this->domainName.$this->bookInfo['url'].'</link>'."\n";
 //		$output .= '<author>'.$this->milieu['artist_name'].'</author>'."\n";
 		$output .= '		<generator>The Grawlix CMS</generator>'."\n";
-		if($this->feedItems)
-		{
-			foreach ( $this->feedItems as $page ) {
-				$output .= '		<item>'."\n";
-				$output .= '			<pubDate>'.$page['date_publish'].'</pubDate>'."\n";
-				$output .= '			<title><![CDATA['.$page['title'].']]></title>'."\n";
-				if ( $page['options'] && $page['options'] != '' )
-				{
-					$output .= '			<guid>'.$page['permalink'].'-'.$page['options'].'</guid>'."\n";
-				}
-				else
-				{
-					$output .= '			<guid>'.$page['permalink'].'</guid>'."\n";
-				}
-				if ( $page['description'] ) {
-					$output .= '			<description><![CDATA['.$page['description'].']]></description>'."\n";
-				}
-				$output .= '		</item>'."\n";
+		foreach ( $this->feedItems as $page ) {
+			$output .= '		<item>'."\n";
+			$output .= '			<pubDate>'.$page['date_publish'].'</pubDate>'."\n";
+			$output .= '			<title><![CDATA['.$page['title'].']]></title>'."\n";
+			if ( $page['options'] && $page['options'] != '' )
+			{
+				$output .= '			<guid>'.$page['permalink'].'-'.$page['options'].'</guid>'."\n";
 			}
+			else
+			{
+				$output .= '			<guid>'.$page['permalink'].'</guid>'."\n";
+			}
+			if ( $page['description'] ) {
+				$output .= '			<description><![CDATA['.$page['description'].']]></description>'."\n";
+			}
+			$output .= '		</item>'."\n";
 		}
 		$output .= '	</channel>'."\n";
 		$output .= '</rss>'."\n";
