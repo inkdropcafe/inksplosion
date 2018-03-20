@@ -1068,7 +1068,8 @@ VALUES
 	(12,'Disqus','disqus','https://disqus.com','&lt;div id=\"disqus_thread\"&gt;&lt;/div&gt;<br>\n&lt;script type=\"text/javascript\"&gt;<br>\n&nbsp;&nbsp;&nbsp;/* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */<br>\n&nbsp;&nbsp;&nbsp;var disqus_shortname = \'<span class=\"highlight\">yourname</span>\'; // required: replace example with your forum shortname',NULL,'Short name'),
 	(13,'IntenseDebate','intensedebate','http://intensedebate.com','&lt;script&gt;<br>\nvar idcomments_acct = \'<span class=\"highlight\">1234567890abcdefghijklmnopqrstuv</span>\';<br>\nvar idcomments_post_id;<br>\nvar idcomments_post_url;<br>\n&lt;/script&gt;<br>',NULL,'Site account'),
 	(15,'Project Wonderful','projectwonderful','https://www.projectwonderful.com','Your Project Wonderful member ID is a number associated with your account. <a href=\"https://www.projectwonderful.com/login.php\">See Project Wonderful</a> for more.',NULL,'Member ID'),
-	(16,'Google Analytics','googleanalytics','http://www.google.com/analytics/','Your site’s unique Tracking ID is a string beginning with “UA-”. You can find it in Google Analytics’s “property settings” for your site after signing up for their analytics service at www.google.com/analytics.',NULL,'Tracking ID');
+	(16,'Google Analytics','googleanalytics','http://www.google.com/analytics/','Your site’s unique Tracking ID is a string beginning with “UA-”. You can find it in Google Analytics’s “property settings” for your site after signing up for their analytics service at www.google.com/analytics.',NULL,'Tracking ID'),
+	(17,'Patreon','patreon','http://www.patreon.com','Your username is the same name with which you log in to Patreon.',NULL,NULL);
 
 /*!40000 ALTER TABLE `grlx_third_service` ENABLE KEYS */;
 UNLOCK TABLES;
