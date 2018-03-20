@@ -3,9 +3,7 @@
 /* Artists use this script to create and edit text pages.
  */
 
-/*****
- * Setup
- */
+/* ! Setup */
 
 require_once('panl.init.php');
 require_once('lib/htmLawed.php');
@@ -20,66 +18,59 @@ $view-> yah = 5;
 
 // Offer these to the artist.
 $page_type_list[1] = array(
-	'layout_type' => 'ht',
 	'title' => 'About the artist',
 	'description' => 'Your bio, artist’s statement, or just who you want people to know you as.',
 	'url' => '/about-artist'
 );
 
 $page_type_list[2] = array(
-	'layout_type' => 'ht',
-	'function' => 'about-comic',
 	'title' => 'About the comic',
 	'description' => 'What you want new readers to know about your comic.',
 	'url' => '/about-comic'
 );
 $page_type_list[3] = array(
-	'layout_type' => 'hit',
-	'function' => 'cast',
 	'title' => 'Cast',
 	'description' => 'Name, quick bio and picture of each character.',
 	'url' => '/comic-characters'
 );
 $page_type_list[4] = array(
-	'layout_type' => 'hl',
-	'function' => 'links',
 	'title' => 'Links',
 	'description' => 'Simple title, optional descriptive text and URL.',
 	'url' => '/favorite-links'
 );
 $page_type_list[5] = array(
-	'layout_type' => 'ht',
-	'function' => 'faq',
 	'title' => 'FAQ',
 	'description' => 'Answers to questions you get asked often it’s worth a page.',
 	'url' => '/frequently-asked-questions'
 );
 $page_type_list[6] = array(
-	'layout_type' => 'free',
-	'function' => 'freeform',
 	'title' => 'Freeform',
 	'description' => 'Add your own HTML. Anything goes.',
 	'url' => '/new-page'
 );
 $page_type_list[7] = array(
-	'layout_type' => 'ht',
-	'function' => 'welcome',
 	'title' => 'Welcome new readers',
 	'description' => 'Introduction to your comic.',
 	'url' => '/new-readers-begin-here'
 );
 $page_type_list[8] = array(
-	'layout_type' => 'hilt',
-	'function' => 'store',
 	'title' => 'Store',
 	'description' => 'Quick product teasers that you link to your ecommerce package.',
 	'url' => '/store'
 );
+$page_type_list[9] = array(
+	'title' => 'Gallery',
+	'description' => 'Show off your artwork outside of the comic.',
+	'url' => '/gallery'
+);
+$page_type_list[10] = array(
+	'title' => 'Book browser',
+	'description' => 'Let readers choose a book in your webcomic library.',
+	'url' => '/bookshelf'
+);
 
 
-/*****
- * Updates
- */
+/* ! Updates */
 
 if ( $_GET['id'] ) {
 	$new_page_type_id = $_GET['id'];
@@ -158,170 +149,236 @@ if ( $_GET['id'] ) {
 
 			// ------ Cast
 			case 3:
-			$data = array (
-				'page_id' => $static_id,
-				'title' => 'First character name',
-				'content' => 'A brief bio of character 1',
-				'sort_order' => 1,
-				'created_on' => $db->NOW(),
-				'modified_on' => $db->NOW()
-			);
-			$new_block_id = $db->insert('static_content', $data);
+				$data = array (
+					'page_id' => $static_id,
+					'title' => 'First character name',
+					'content' => 'A brief bio of character 1',
+					'sort_order' => 1,
+					'created_on' => $db->NOW(),
+					'modified_on' => $db->NOW()
+				);
+				$new_block_id = $db->insert('static_content', $data);
 
-			$data = array (
-				'page_id' => $static_id,
-				'title' => 'Second character name',
-				'content' => 'A brief bio of character 2',
-				'sort_order' => 2,
-				'created_on' => $db->NOW(),
-				'modified_on' => $db->NOW()
-			);
-			$new_block_id = $db->insert('static_content', $data);
+				$data = array (
+					'page_id' => $static_id,
+					'title' => 'Second character name',
+					'content' => 'A brief bio of character 2',
+					'sort_order' => 2,
+					'created_on' => $db->NOW(),
+					'modified_on' => $db->NOW()
+				);
+				$new_block_id = $db->insert('static_content', $data);
 
-			$data = array (
-				'page_id' => $static_id,
-				'title' => 'Third character name',
-				'content' => 'A brief bio of character 3',
-				'sort_order' => 3,
-				'created_on' => $db->NOW(),
-				'modified_on' => $db->NOW()
-			);
-			$new_block_id = $db->insert('static_content', $data);
-			break;
+				$data = array (
+					'page_id' => $static_id,
+					'title' => 'Third character name',
+					'content' => 'A brief bio of character 3',
+					'sort_order' => 3,
+					'created_on' => $db->NOW(),
+					'modified_on' => $db->NOW()
+				);
+				$new_block_id = $db->insert('static_content', $data);
+				break;
 
 			// ------ Links
 			case 4:
-			$data = array (
-				'page_id' => $static_id,
-				'title' => 'My favorite comic',
-				'url' => 'http://el-indon.com',
-				'sort_order' => 1,
-				'created_on' => $db->NOW(),
-				'modified_on' => $db->NOW()
-			);
-			$new_block_id = $db->insert('static_content', $data);
+				$data = array (
+					'page_id' => $static_id,
+					'title' => 'My favorite comic',
+					'url' => 'http://el-indon.com',
+					'sort_order' => 1,
+					'created_on' => $db->NOW(),
+					'modified_on' => $db->NOW()
+				);
+				$new_block_id = $db->insert('static_content', $data);
 
-			$data = array (
-				'page_id' => $static_id,
-				'title' => 'Another favorite comic',
-				'url' => 'http://evil-inc.com',
-				'sort_order' => 2,
-				'created_on' => $db->NOW(),
-				'modified_on' => $db->NOW()
-			);
-			$new_block_id = $db->insert('static_content', $data);
+				$data = array (
+					'page_id' => $static_id,
+					'title' => 'Another favorite comic',
+					'url' => 'http://evil-inc.com',
+					'sort_order' => 2,
+					'created_on' => $db->NOW(),
+					'modified_on' => $db->NOW()
+				);
+				$new_block_id = $db->insert('static_content', $data);
 
-			$data = array (
-				'page_id' => $static_id,
-				'title' => 'And a third site I like',
-				'url' => 'http://www.getgrawlix.com',
-				'sort_order' => 3,
-				'created_on' => $db->NOW(),
-				'modified_on' => $db->NOW()
-			);
-			$new_block_id = $db->insert('static_content', $data);
-			break;
+				$data = array (
+					'page_id' => $static_id,
+					'title' => 'And a third site I like',
+					'url' => 'http://www.getgrawlix.com',
+					'sort_order' => 3,
+					'created_on' => $db->NOW(),
+					'modified_on' => $db->NOW()
+				);
+				$new_block_id = $db->insert('static_content', $data);
+				break;
 
 			// ------ FAQ
 			case 5:
-			$data = array (
-				'page_id' => $static_id,
-				'title' => 'A question?',
-				'content' => 'An answer.',
-				'sort_order' => 1,
-				'created_on' => $db->NOW(),
-				'modified_on' => $db->NOW()
-			);
-			$new_block_id = $db->insert('static_content', $data);
+				$data = array (
+					'page_id' => $static_id,
+					'title' => 'A question?',
+					'content' => 'An answer.',
+					'sort_order' => 1,
+					'created_on' => $db->NOW(),
+					'modified_on' => $db->NOW()
+				);
+				$new_block_id = $db->insert('static_content', $data);
 
-			$data = array (
-				'page_id' => $static_id,
-				'title' => 'Another question?',
-				'content' => 'Another answer.',
-				'sort_order' => 2,
-				'created_on' => $db->NOW(),
-				'modified_on' => $db->NOW()
-			);
-			$new_block_id = $db->insert('static_content', $data);
+				$data = array (
+					'page_id' => $static_id,
+					'title' => 'Another question?',
+					'content' => 'Another answer.',
+					'sort_order' => 2,
+					'created_on' => $db->NOW(),
+					'modified_on' => $db->NOW()
+				);
+				$new_block_id = $db->insert('static_content', $data);
 
-			$data = array (
-				'page_id' => $static_id,
-				'title' => 'A third question?',
-				'content' => 'A third answer.',
-				'sort_order' => 3,
-				'created_on' => $db->NOW(),
-				'modified_on' => $db->NOW()
-			);
-			$new_block_id = $db->insert('static_content', $data);
+				$data = array (
+					'page_id' => $static_id,
+					'title' => 'A third question?',
+					'content' => 'A third answer.',
+					'sort_order' => 3,
+					'created_on' => $db->NOW(),
+					'modified_on' => $db->NOW()
+				);
+				$new_block_id = $db->insert('static_content', $data);
 			break;
 
 			// ------ Freeform
 			case 6:
-			$data = array (
-				'page_id' => $static_id,
-				'title' => 'Freeform',
-				'content' => '',
-				'sort_order' => 1,
-				'created_on' => $db->NOW(),
-				'modified_on' => $db->NOW()
-			);
-			$new_block_id = $db->insert('static_content', $data);
-			break;
+				$data = array (
+					'page_id' => $static_id,
+					'title' => 'Freeform',
+					'content' => '',
+					'sort_order' => 1,
+					'created_on' => $db->NOW(),
+					'modified_on' => $db->NOW()
+				);
+				$new_block_id = $db->insert('static_content', $data);
+				break;
 
 			// ------ Welcome new readers
 			case 7:
-			$data = array (
-				'page_id' => $static_id,
-				'title' => 'Welcome new readers!',
-				'content' => '(Tell people what your comic’s about.)',
-				'sort_order' => 1,
-				'created_on' => $db->NOW(),
-				'modified_on' => $db->NOW()
-			);
-			$new_block_id = $db->insert('static_content', $data);
-			break;
+				$data = array (
+					'page_id' => $static_id,
+					'title' => 'Welcome new readers!',
+					'content' => '(Tell people what your comic’s about.)',
+					'sort_order' => 1,
+					'created_on' => $db->NOW(),
+					'modified_on' => $db->NOW()
+				);
+				$new_block_id = $db->insert('static_content', $data);
+				break;
 
 			// ------ “Store”
 			case 8:
-			$data = array (
-				'page_id' => $static_id,
-				'title' => 'Swag',
-				'content' => 'About this product.',
-				'url' => 'www.your-store.com',
-				'sort_order' => 1,
-				'created_on' => $db->NOW(),
-				'modified_on' => $db->NOW()
-			);
-			$new_block_id = $db->insert('static_content', $data);
+				$data = array (
+					'page_id' => $static_id,
+					'title' => 'Swag',
+					'content' => 'About this product.',
+					'url' => 'www.your-store.com',
+					'sort_order' => 1,
+					'created_on' => $db->NOW(),
+					'modified_on' => $db->NOW()
+				);
+				$new_block_id = $db->insert('static_content', $data);
 
-			$data = array (
-				'page_id' => $static_id,
-				'title' => 'Swag',
-				'content' => 'About this product.',
-				'url' => 'www.your-store.com',
-				'sort_order' => 2,
-				'created_on' => $db->NOW(),
-				'modified_on' => $db->NOW()
-			);
-			$new_block_id = $db->insert('static_content', $data);
+				$data = array (
+					'page_id' => $static_id,
+					'title' => 'Swag',
+					'content' => 'About this product.',
+					'url' => 'www.your-store.com',
+					'sort_order' => 2,
+					'created_on' => $db->NOW(),
+					'modified_on' => $db->NOW()
+				);
+				$new_block_id = $db->insert('static_content', $data);
 
-			$data = array (
-				'page_id' => $static_id,
-				'title' => 'Swag',
-				'content' => 'About this product.',
-				'url' => 'www.your-store.com',
-				'sort_order' => 3,
-				'created_on' => $db->NOW(),
-				'modified_on' => $db->NOW()
-			);
-			$new_block_id = $db->insert('static_content', $data);
-			break;
+				$data = array (
+					'page_id' => $static_id,
+					'title' => 'Swag',
+					'content' => 'About this product.',
+					'url' => 'www.your-store.com',
+					'sort_order' => 3,
+					'created_on' => $db->NOW(),
+					'modified_on' => $db->NOW()
+				);
+				$new_block_id = $db->insert('static_content', $data);
+				break;
+
+			// ------ “Store”
+			case 9:
+				$data = array (
+					'page_id' => $static_id,
+					'title' => 'Picture 1',
+					'content' => 'A few words about this image.',
+					'sort_order' => 1,
+					'created_on' => $db->NOW(),
+					'modified_on' => $db->NOW()
+				);
+				$new_block_id = $db->insert('static_content', $data);
+
+				$data = array (
+					'page_id' => $static_id,
+					'title' => 'Picture 2',
+					'content' => 'A few words about this image.',
+					'sort_order' => 2,
+					'created_on' => $db->NOW(),
+					'modified_on' => $db->NOW()
+				);
+				$new_block_id = $db->insert('static_content', $data);
+
+				$data = array (
+					'page_id' => $static_id,
+					'title' => 'Picture 3',
+					'content' => 'A few words about this image.',
+					'sort_order' => 3,
+					'created_on' => $db->NOW(),
+					'modified_on' => $db->NOW()
+				);
+				$new_block_id = $db->insert('static_content', $data);
+
+			// ------ Multi-book browser
+			case 10:
+				$book_list = $db->get('book',NULL,'id,title,description');
+
+				if ( $book_list ) {
+					$order = 1;
+					foreach ( $book_list as $key => $val ) {
+
+						// Get its path.
+						$db->where('rel_id',$val['id']);
+						$db->where('rel_type','book');
+						$url = $db->getOne('path','url');
+
+						$data = array (
+							'page_id' => $static_id,
+							'title' => $val['title'],
+							'content' => $val['description'],
+							'url' => $url['url'],
+							'sort_order' => $order,
+							'created_on' => $db->NOW()
+						);
+						$new_block_id = $db->insert('static_content', $data);
+						$order++;
+					}
+				}
+
+				break;
 		}
 	}
 
-	if ($new_page_type_id == 6)
+	// Send freeform pages straight to the block editor.
+	if (
+		$new_page_type_id == 6
+		|| $new_page_type_id == 7
+		|| $new_page_type_id == 1
+		|| $new_page_type_id == 2
+	)
 	{
-		header('location:sttc.block-edit.php?block_id='.$new_block_id);
+		header('location:sttc.block-edit.php?msg=created&block_id='.$new_block_id);
 	}
 	else
 	{
@@ -341,15 +398,11 @@ EOL;
 	return $output;
 }
 
-/*****
- * Display logic
- */
+/* ! Display logic */
 
 
 
-/************
- * Display
- */
+/* ! Display */
 
 $view->page_title('New static page');
 $view->tooltype('chap');
@@ -388,6 +441,12 @@ print($output);
 <?=display_new_block($page_type_list[5],5) ?>
 
 <?=display_new_block($page_type_list[8],8) ?>
+
+<?=display_new_block($page_type_list[9],9) ?>
+
+<?php if(is_file('book.list.php')) : ?>
+<?=display_new_block($page_type_list[10],10) ?>
+<?php endif; ?>
 					</div>
 
 					<div class="medium-4 columns">

@@ -75,7 +75,7 @@ $modal->value($item['url']);
 $modal->name('input[url]');
 $url_field_output = $modal->paint();
 
-$modal->input_title('title');
+$modal->input_clickable('title');
 $modal->name('input[title]');
 $modal->value($item['title']);
 $title_field_output = $modal->paint();

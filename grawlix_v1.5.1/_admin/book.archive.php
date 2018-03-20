@@ -18,10 +18,20 @@ unset($args);
 
 $book_id = $_POST['book_id'];
 $book_id ? $book_id : $book_id = $_GET['book_id'];
+$book_id ? $book_id : $book_id = $_SESSION['book_id'];
+
+// A book ID is required. If you don’t have one at this point, then get the “first” book in the database.
 if ( !$book_id ) {
-	$book = new GrlxComicBook;
-	$book_id = $book->bookID;
+	$db->orderBy ('sort_order,id','ASC');
+	$result = $db->getOne ('book','id');
+	if ( $result ) {
+		$book_id = $result['id'];
+	}
+	else {
+		die('No books in the database.');
+	}
 }
+
 
 if ( $_POST['submit'] ) {
 	$args['archiveNew'] = array(
@@ -63,6 +73,14 @@ $xml = new GrlxXML_Book($args);
 
 
 /* ! Build * * * * * * * */
+
+
+// Get some basic information about this book.
+if ($book_id && is_numeric($book_id))
+{
+	$db->where('id',$book_id);
+	$book_info = $db->getOne('book','title');
+}
 
 
 // ! Behavior
@@ -138,6 +156,10 @@ if ( $xml->layout && $infoXML->archive['chapter']['layout'] && $infoXML->archive
 }
 
 if ( $xml->meta && $infoXML->archive['chapter']['option'] && $infoXML->archive['page']['option'] ) {
+
+	// Yeeeah, let’s just sneak this one in there. Ahem.
+	$infoXML->archive['page']['option'][] = 'image';
+
 	$meta_output  = '<div>';
 	$meta_output .= '<h5>Markers</h5>';
 
@@ -183,11 +205,17 @@ if ( $xml->saveResult == 'error' ) {
 
 $view->page_title('Archives');
 $view->tooltype('arcv');
-$view->headline('Comic archive editor');
-
+if (is_file('book.list.php'))
+{
+	$view->headline('Archive settings <span>'.$book_info['title'].'</span>');
+}
+else
+{
+	$view->headline('Archive settings');
+}
 $form->input_hidden('book_id');
 $form->value($book_id);
-$book_info = $form->paint();
+$hidden_book_info = $form->paint();
 
 $view->group_css('arcv');
 $view->group_h2('Behavior');
@@ -216,7 +244,7 @@ $output  = $view->open_view();
 $output .= $view->view_header();
 $output .= $alert_output;
 $output .= $form->open_form();
-$output .= $book_info;
+$output .= $hidden_book_info;
 $output .= $content_output;
 $output .= $form->close_form();
 $output .= $view->close_view();

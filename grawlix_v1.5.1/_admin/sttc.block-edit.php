@@ -9,8 +9,10 @@ $variable_list = array(
 	'block_id',
 	'title',
 	'content',
+	'pattern',
 	'url',
-	'remove_image'
+	'remove_image',
+	'msg'
 );
 if ( $variable_list ) {
 	foreach ( $variable_list as $val ) {
@@ -37,6 +39,8 @@ $link = new GrlxLinkStyle;
 $message = new GrlxAlert;
 $form = new GrlxForm;
 $fileops = new GrlxFileOps;
+$sl = new GrlxSelectList;
+
 
 // Make sure the image folder exists and is accessible.
 $alert_output .= $fileops->check_or_make_dir('../'.DIR_STATIC_IMG);
@@ -44,6 +48,9 @@ $alert_output .= $fileops->check_or_make_dir('../'.DIR_STATIC_IMG);
 $view-> yah = 6;
 
 
+if ( $msg == 'created' ) {
+	$alert_output .= $message->success_dialog('New page built. Add your content below.');
+}
 
 
 // ! Update
@@ -65,6 +72,7 @@ if ( $_POST && is_numeric($block_id) )
 	$data = array(
 		'title'=>$title,
 		'content'=>$content,
+		'pattern'=>$pattern,
 		'url'=>$url
 	);
 	$db->where('id',$block_id);
@@ -90,15 +98,15 @@ if ( $_POST && $page_id && !$block_id )
 {
 
 	// What’s the last block sort_order in this page?
-	$cols = array('sort_order');
 	$db->where('page_id',$page_id);
 	$db->orderBy('sort_order', 'DESC');
-	$sort_info = $db->getOne('static_content',$cols);
+	$sort_info = $db->getOne('static_content','sort_order');
 
 	$data = array(
 		'sort_order'=>$sort_info['sort_order'] + 1,
 		'page_id'=>$page_id,
 		'title'=>$title,
+		'pattern'=>$pattern,
 		'content'=>$content,
 		'url'=>$url,
 		'created_on' => $db->NOW()
@@ -195,16 +203,76 @@ if ( $block_id && is_numeric($block_id) ) {
 	$block_info = $db->getOne('static_content', null, $cols);
 
 }
+
+
+
+// ! Pattern select
+
+// Which theme directory does this site use?
+$theme_directory = get_current_theme_directory($db);
+
+if (!$theme_directory || $theme_directory === FALSE)
+{
+	$alert_output .= $message->alert_dialog('I couldn’t determine the <a href="./site.theme-manager.php">site’s theme</a>, and so can’t find any theme pattern files.');
+}
+
+
+// Scan the current theme for pattern files in case the user
+// renamed some or created new ones.
+if ( $theme_directory )
+{
+	$pattern_order_list = array('(None)');
+	$file_list = scandir('../themes/'.$theme_directory);
+	if($file_list)
+	{
+		foreach($file_list as $filename)
+		{
+			if ( substr($filename,0,8) == 'pattern.')
+			{
+				$filename = explode('.',$filename);
+				$pattern_order_list[$filename[1]] = str_replace('-',' ',$filename[1]);
+			}
+		}
+	}
+}
+
+// Build a list to let the artist chooses a pattern for this static page.
+if ( $pattern_order_list )
+{
+	$pattern_select = build_select_simple('pattern',$pattern_order_list, $block_info['pattern'],'width:200px');
+}
+else {
+	if ( !$theme_directory )
+	{
+		$theme_directory = '(unknown)';
+	}
+	$order_output = 'I couldn’t find any <a href="http://www.getgrawlix.com/docs/'.DOCS_VERSION.'/static-patterns">pattern files</a> in the /themes/'.$folder_name.' folder.';
+}
+
+
+
+
+
 if ( $block_info || $page_id )
 {
 
+	if ( $page_info['title'] ) {
+		$page_title = $page_info['title'];
+	}
+	else {
+		$page_title = 'Untitled';
+	}
+
 	$title_output  = '<label for="title">Title</label>'."\n";
-	$title_output .= '<input type="text" name="title" id="title" maxlength="64" value="'.$block_info['title'].'">'."\n";
+	$title_output .= '<input type="text" name="title" id="title" maxlength="64" value="'.$block_info['title'].'" style="max-width:20rem">'."\n";
 
 	if ( strtolower($block_info['title']) != 'freeform' )
 	{
 		$url_output  = '<label for="title">External URL</label>'."\n";
 		$url_output .= '<input type="text" name="url" id="url" value="'.$block_info['url'].'">'."\n";
+
+		$pattern_output  = '<label for="title">Pattern</label>'."\n";
+		$pattern_output .= $pattern_select."\n";
 
 		$content_output  = '<label for="title">Body</label>'."\n";
 		$content_output .= '<textarea name="content" id="content" rows="15">'.$block_info['content'].'</textarea>'."\n";
@@ -212,10 +280,19 @@ if ( $block_info || $page_id )
 		if ( $block_info['image'] && $block_info['image'] != '' )
 		{
 			$image_output .= '<img src="'.$block_info['image'].'" alt="image" /><br/>'."\n";
-			$image_output .= '<a href="?remove_image=1&amp;block_id='.$block_id.'">Remove image</a>'."\n";
+			$image_output .= '&nbsp;<p><a href="?remove_image=1&amp;block_id='.$block_id.'" class="btn secondary delete" name="submit" type="submit" value="save"/><i></i>Remove image</a></p>'."\n";
 		}
 
-		$image_output .= '<p><br/><label for="title">Upload image</label>'."\n";
+		$max = ini_get( 'upload_max_filesize' ).'B maximum';
+
+		if ($block_info['image'] && $block_info['image'] != '')
+		{
+			$image_output .= '<p><br/><label for="title">Upload a different image ('.$max.')</label>'."\n";
+		}
+		else
+		{
+			$image_output .= '<p><br/><label for="title">Upload an image ('.$max.')</label>'."\n";
+		}
 		$image_output .= ' <input type="file" id="image" name="image[]"></p>';
 
 	}
@@ -262,16 +339,26 @@ $view->group_css('Layout');
 $view->group_h2('Content');
 $view->group_instruction('Information that people came to see. The body field supports <a href="https://daringfireball.net/projects/markdown/">Markdown</a> and most HTML.');
 $view->group_contents($title_output . $content_output);
-$final_meta_output  = $view->format_group().$form->form_buttons().'<hr />';
+$final_meta_output  = $view->format_group().'<hr />';
 
 
 if ( $url_output )
 {
 	$view->group_css('Layout');
 	$view->group_h2('Link');
-	$view->group_instruction('Optional URL people will go to when they click a certain bit of text or image, depending on the pattern selected.');
+	$view->group_instruction('URL people will go to when they click a certain bit of text or image, depending on how the pattern uses links.');
 	$view->group_contents($url_output);
-	$final_content_output = $view->format_group().$form->form_buttons().'<hr />';
+	$final_content_output = $view->format_group().'<hr />';
+}
+
+
+if ( $pattern_output )
+{
+	$view->group_css('Layout');
+	$view->group_h2('Pattern');
+	$view->group_instruction('Choose a HTML arrangement for this particular block, overriding the page’s default pattern.');
+	$view->group_contents($pattern_output);
+	$final_pattern_output = $view->format_group().'<hr />';
 }
 
 
@@ -279,9 +366,9 @@ if ( $image_output )
 {
 	$view->group_css('Layout');
 	$view->group_h2('Image');
-	$view->group_instruction('Optional graphic associated with this block.');
+	$view->group_instruction('Graphic associated with this content block.');
 	$view->group_contents($image_output);
-	$final_image_output = $view->format_group().$form->form_buttons();
+	$final_image_output = $view->format_group().'<hr/>';
 }
 
 
@@ -302,8 +389,11 @@ $output .= $final_meta_output;
 $output .= $final_url_output;
 $output .= $final_content_output;
 $output .= $final_image_output;
+$output .= $final_pattern_output;
 
 print($output);
+print('<button class="btn primary save right" name="submit" type="submit" value="save"/><i></i>Save</button>');
+
 
 $output  = $form->close_form();
 $output .= $view->close_view();

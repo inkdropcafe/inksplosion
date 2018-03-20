@@ -3,9 +3,7 @@
 /* Artists use this script to add connections to social media services.
  */
 
-/*****
- * Setup
- */
+// ! ------ Setup
 
 require_once('panl.init.php');
 
@@ -16,9 +14,7 @@ $message = new GrlxAlert;
 
 $view-> yah = 8;
 
-/*****
- * Updates
- */
+// ! ------ Updates
 
 // Reset comment service
 if ( is_numeric($_GET['reset_comments']) ) {
@@ -99,10 +95,34 @@ if ( $_POST['comment_info'] && is_numeric($_POST['service_id']) ) {
 	}
 }
 
+// ! Is Patreon in the mix?
+// We added Patreon in v1.5. This bit updates the database for older installations.
 
-/*****
- * Display logic
- */
+$db->where('label','patreon');
+$result = $db->getOne('third_service','id');
+if (!$result || count($result) == 0)
+{
+	$data = array (
+		'title' => 'Patreon',
+		'label' => 'patreon',
+		'url' => 'https://patreon.com',
+		'description' => 'Your username is the same name with which you log in to Patreon.',
+		'info_title' => 'Username'
+	);
+	$service_id = $db->insert('third_service', $data);
+}
+if ($service_id)
+{
+	$data = array (
+		'service_id' => $service_id,
+		'function_id' => '1',
+		'active' => '0'
+	);
+	$success = $db->insert('third_match', $data);
+}
+
+
+// ! ------ Display logic
 
 // Fetch the service categories -- but not ads
 $cols = array('id', 'title', 'description');
@@ -430,9 +450,8 @@ $view->tooltype('social');
 $view->headline('Social media');
 
 
-/*****
- * Display
- */
+// ! ------ Display
+
 
 $output  = $view->open_view();
 $output .= $view->view_header();

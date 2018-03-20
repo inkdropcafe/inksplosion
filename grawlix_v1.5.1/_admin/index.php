@@ -18,7 +18,7 @@ $view = new GrlxView;
 $fileops = new GrlxFileOps;
 $link = new GrlxLink;
 $fileops->db = $db;
-$view-> yah = 15;
+$view-> yah = 99;
 
 $view->page_title('Grawlix panel');
 $view->tooltype('panl');
@@ -80,7 +80,6 @@ $tools_set_output = <<<EOL
 	<li><a href="marker-type.list.php">Marker types</a></li>
 	<li><a href="book.page-create.php">New comic page</a></li>
 	<li><a href="sttc.page-new.php">New static page</a></li>
-	<li><a href="site.config.php">RSS/JSON feeds</a></li>
 	<li><a href="xtra.social.php">Sharing</a></li>
 	<li><a href="site.nav.php">Site-wide navigation menu</a></li>
 	<li><a href="sttc.page-list.php">Static (non-comic) pages</a></li>

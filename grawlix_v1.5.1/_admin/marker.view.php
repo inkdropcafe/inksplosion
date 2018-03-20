@@ -10,9 +10,9 @@ $message = new GrlxAlert;
 $link = new GrlxLinkStyle;
 $list = new GrlxList;
 $form = new GrlxForm;
-$fileops = new GrlxFileOps;
-$fileops->db = $db;
-$comic_image = new GrlxComicImage;
+//$fileops = new GrlxFileOps;
+//$fileops->db = $db;
+//$comic_image = new GrlxComicImage;
 $sl = new GrlxSelectList;
 
 $form->send_to($_SERVER['SCRIPT_NAME']);

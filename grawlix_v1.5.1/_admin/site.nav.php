@@ -3,9 +3,7 @@
 /* Artists use this script to control the main site navigation.
  */
 
-/*****
- * Setup
- */
+/* ! Setup */
 
 require_once('panl.init.php');
 
@@ -18,9 +16,7 @@ $list = new GrlxList;
 
 $view-> yah = 7;
 
-/*****
- * Updates
- */
+/* ! Updates */
 
 // Act on an edit from the reveal modal
 if ( $_POST['modal-submit'] ) {
@@ -64,14 +60,12 @@ if ( $_POST['modal-submit'] ) {
 }
 
 
-/*****
- * Display logic
- */
+/* ! Display logic */
 
 // Fetch site navigation
 $cols = array(
 	'id',
-	'title',
+	'title AS clickable_title',
 	'url',
 	'rel_id',
 	'rel_type',
@@ -90,12 +84,24 @@ if ( $result ) {
 $result = $db-> get ('static_page',null,'id,title');
 $static_list = rekey_array($result,'id');
 
-// Replace static pages’ labels with the pages’ actual meta titles.
+// Fetch books
+$result = $db-> get ('book',null,'id,title');
+$book_list = rekey_array($result,'id');
+
 if ( $static_list && $nav_item ) {
   foreach ( $nav_item as $key => $val ) {
     if ( $val['rel_type'] == 'static' ) {
       $rel_id = $val['rel_id'];
-//      $nav_item[$key]['title'] = $static_list[$rel_id]['title'];
+      $nav_item[$key]['title'] = $static_list[$rel_id]['title'];
+    }
+  }
+}
+
+if ( $book_list && $nav_item ) {
+  foreach ( $nav_item as $key => $val ) {
+    if ( $val['rel_type'] == 'book' || $val['rel_type'] == 'archive' ) {
+      $rel_id = $val['rel_id'];
+      $nav_item[$key]['title'] = $book_list[$rel_id]['title'];
     }
   }
 }
@@ -164,10 +170,35 @@ if ( $nav_item ) {
 			$item['url'] = '<span class="fixme">'.$item['url'].'</span>';
 		}
 
+		if ($item['title'])
+		{
+			$title = $item['title'];
+		}
+		else
+		{
+			$title = '-';
+		}
+
+		if (strlen($item['url']) > 32)
+		{
+			$url = substr($item['url'],0,28).'…';
+		}
+		else
+		{
+			$url = $item['url'];
+		}
+
+		if (strlen($title) > 24)
+		{
+			$title = substr($title,0,20).'…';
+		}
+
 		$list_items[$item['id'].'||'.$item['in_menu']] = array(
-			$item['title'],
-			$item['url'],
-			$vis_output, //$item['rel_type'],
+			$item['clickable_title'],
+			$title,
+			$url,
+//			$item['rel_type'],
+			$vis_output,
 			$edit_link->icon_link() // $action_output
 		);
 	}
@@ -194,11 +225,21 @@ $heading_list[] = array(
 	'class' => null
 );
 $heading_list[] = array(
-	'value' => 'URL',
+	'value' => 'Title',
 	'class' => null
 );
 $heading_list[] = array(
-	'value' => 'In menu',
+	'value' => 'URL',
+	'class' => null
+);
+/*
+$heading_list[] = array(
+	'value' => 'Type',
+	'class' => null
+);
+*/
+$heading_list[] = array(
+	'value' => 'Visible',
 	'class' => null
 );
 $heading_list[] = array(
@@ -213,9 +254,7 @@ $display_output .= '	<input type="hidden" name="grlx_xss_token" value="'.$_SESSI
 $display_output .= $list->format_content();
 
 
-/*****
- * Display
- */
+/* ! Display */
 
 $output  = $view->open_view();
 $output .= $view->view_header();

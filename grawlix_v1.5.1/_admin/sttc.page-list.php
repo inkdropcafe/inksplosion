@@ -3,9 +3,7 @@
 /* Artists use this script to browse their static site pages.
  */
 
-/*****
- * Setup
- */
+/* ! Setup */
 
 require_once('panl.init.php');
 
@@ -17,9 +15,7 @@ $view-> yah = 6;
 $preview_limit = 5;
 
 
-/*****
- * Updates
- */
+/* ! Updates */
 
 if ( $_POST['modal-submit'] && is_numeric($_POST['delete_id']) ) {
 	$delete_id = $_POST['delete_id'];
@@ -34,9 +30,7 @@ if ( $_POST['modal-submit'] && is_numeric($_POST['delete_id']) ) {
 }
 
 
-/*****
- * Display logic
- */
+/* ! Display logic */
 
 // Grab all pages from the database.
 $sql = "
@@ -136,7 +130,7 @@ $view->tooltype('sttc');
 $view->headline('Static pages');
 
 $link->url('site.nav.php');
-$link->tap('Edit order and URLs');
+$link->tap('Edit menu');
 $action_output = $link->text_link('menu');
 
 $link->url('sttc.page-new.php');
@@ -146,9 +140,7 @@ $action_output .= $link->button_secondary('new');
 $view->action($action_output);
 
 
-/*****
- * Display
- */
+/* ! Display */
 
 $output  = $view->open_view();
 $output .= $view->view_header();

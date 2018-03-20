@@ -13,6 +13,8 @@ $fileops = new GrlxFileOps;
 $comic_image = new GrlxComicImage;
 $sl = new GrlxSelectList;
 
+$max_file_size = ini_get( 'upload_max_filesize' ).' maximum';
+
 $view-> yah = 1;
 
 $var_list = array(
@@ -28,7 +30,8 @@ $var_list = array(
 	array('pub_month','int'),
 	array('pub_year','int'),
 	array('transcript','html'),
-	array('pub_time','string')
+	array('pub_time','string'),
+	array('created','int')
 );
 
 if ( $var_list ) {
@@ -57,7 +60,6 @@ $transcript ? $transcript : $transcript = $_SESSION['transcript'];
 $blog_post = $_POST['blog_post'];
 $blog_post ? $blog_post : $blog_post = $_GET['blog_post'];
 $blog_post ? $blog_post : $blog_post = $_SESSION['blog_post'];
-
 
 
 // ! Updates
@@ -173,7 +175,7 @@ if ( $_FILES['file_change'] && $new_page_id ) {
 			}
 		}
 
-		header('location:book.page-edit.php?page_id='.$new_page_id);
+		header('location:book.page-edit.php?created=1&page_id='.$new_page_id);
 	}
 }
 
@@ -214,7 +216,7 @@ $sl-> setCurrent(date('Y'));
 $sl-> setList($year_list);
 $sl-> setValueID('id');
 $sl-> setValueTitle('title');
-$sl-> setStyle('width:4rem');
+$sl-> setStyle('width:6rem');
 $year_select_output = $sl-> buildSelect();
 
 $sl-> setName('pub_month');
@@ -222,7 +224,7 @@ $sl-> setCurrent(date('m'));
 $sl-> setList($month_list);
 $sl-> setValueID('id');
 $sl-> setValueTitle('title');
-$sl-> setStyle('width:8rem');
+$sl-> setStyle('width:9rem');
 $month_select_output = $sl-> buildSelect();
 
 $sl-> setName('pub_day');
@@ -230,7 +232,7 @@ $sl-> setCurrent(date('d'));
 $sl-> setList($day_list);
 $sl-> setValueID('id');
 $sl-> setValueTitle('title');
-$sl-> setStyle('width:3rem');
+$sl-> setStyle('width:5rem');
 $day_select_output = $sl-> buildSelect();
 
 
@@ -254,7 +256,6 @@ $choose_marker_output .= <<<EOL
 EOL;
 
 $choose_marker_output .= '<select name="into_marker_id" style="width:12rem">'."\n";
-//$choose_marker_output .= '	<option value="the_book">the book</option>'."\n";
 if ( $book-> markerList && count($book-> markerList) > 0 ) {
 	$marker_list = array_reverse($book-> markerList);
 	foreach ( $marker_list as $key => $val ) {
@@ -264,7 +265,7 @@ if ( $book-> markerList && count($book-> markerList) > 0 ) {
 	}
 }
 else {
-	$choose_marker_output .= 'the book'."\n";
+	$choose_marker_output .= '	<option value="the_book">the book</option>'."\n";
 }
 $choose_marker_output .= '</select>'."\n";
 
@@ -280,44 +281,6 @@ $meta_output .= $day_select_output;
 $meta_output .= $month_select_output;
 $meta_output .= $year_select_output;
 $meta_output .= '&nbsp;Time: <input type="text" name="pub_time" style="width:6rem;display:inline" value="'.date('H:i:s').'"/>'."\n";
-
-
-
-/*
-if ( $book_page_list ) {
-	foreach ( $book_page_list as $key => $val ) {
-		if ( $back_page_id ) {
-			$next_page_id = $val['id'];
-			break;
-		}
-		if ( $val['id'] == $page_id ) {
-			$back_page_id = $last_id;
-		}
-		$last_id = $val['id'];
-	}
-	$first_page_id = reset($book_page_list);
-	$first_page_id = $first_page_id['id'];
-	$last_page_id = end($book_page_list);
-	$last_page_id = $last_page_id['id'];
-
-	if ( $first_page_id == $page_id ) {
-		$next_page_id = $book_page_list[1]['id'];
-	}
-
-	if ( $first_page_id == $page_id ) {
-		unset($first_page_id);
-	}
-
-	if ( $last_page_id == $page_id ) {
-		unset($last_page_id);
-	}
-
-}
-*/
-
-
-
-
 
 
 
@@ -337,16 +300,20 @@ $transcript_output = <<<EOL
 EOL;
 
 
+if (is_file('book.list.php'))
+{
+	$link->url('book.list.php');
+	$link->tap('Switch books');
+	$link->reveal(false);
+	$action_output = $link->text_link('back');
+}
+
 $link->url('book.import.php');
-$link->tap('Create multiple comic pages');
+$link->tap('Create multiple pages');
 $link->reveal(false);
-$action_output = $link->button_secondary('new');
-
-
-//$action_output .= '<a href="#multiple">Upload multiple pics</a>'."\n";
+$action_output .= $link->button_secondary('new');
 
 $view->action($action_output);
-
 
 $new_image = <<<EOL
 <label for="file_change">Comic page image</label>
@@ -361,7 +328,7 @@ $content_output .= '	<input type="hidden" name="grlx_xss_token" value="'.$_SESSI
 
 $view->group_css('page');
 $view->group_h2('Image');
-$view->group_instruction('Upload the graphic(s) that readers will see on this page.');
+$view->group_instruction('Upload the graphic(s) that readers will see on this page. ('.$max_file_size.')');
 $view->group_contents($new_image);
 $content_output .= $view->format_group()."<hr/>\n";
 
@@ -400,16 +367,10 @@ $content_output .= $view->format_group();
 $content_output .= '<input type="hidden" name="book_id" value="'.$book_id.'"/>'."\n";
 $content_output .= '</form>'."\n";
 
-//$content_output .= '<hr/><h1 id="multiple">Multiple new pages</h1><br/>'."\n";
-
-/*
-$view->group_css('page');
-$view->group_h2('Quick add');
-$view->group_instruction('Just add page(s) to the end of your book. No frills, just pics.');
-$view->group_contents($quick_upload_field);
-$content_output .= $view->format_group()."\n";
-*/
-
+if ($created == 1)
+{
+	$alert_output .= $message->success_dialog('Page created. <a href="book.page-create.php">Make another</a>?');
+}
 
 
 
@@ -421,7 +382,14 @@ $content_output .= $view->format_group()."\n";
 
 $view->page_title('Comic page creator');
 $view->tooltype('page');
-$view->headline('Create a new page');
+if (is_file('book.list.php'))
+{
+	$view->headline('New page in '.$book->info['title']);
+}
+else
+{
+	$view->headline('New page');
+}
 $view->action($action_output);
 
 $output  = $view->open_view();

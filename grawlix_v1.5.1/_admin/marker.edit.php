@@ -13,6 +13,8 @@ $link2 = new GrlxLinkStyle;
 $list = new GrlxList;
 $sl = new GrlxSelectList;
 
+$max_file_size = ini_get( 'upload_max_filesize' ).'B maximum';
+
 $var_list = array(
 	'marker_id','new_title','edit_marker_type','new_image','original_image_ref_id'
 );
@@ -190,7 +192,7 @@ else
 	$thumbnail_image = '<p>This marker has no archive image.</p>';
 }
 
-$image_form_output .= '	<p><label for="new_title">Image</label>'."\n";
+$image_form_output .= '	<p><label for="new_image">Image</label>'."\n";
 $image_form_output .= $thumbnail_image."\n";
 $image_form_output .= '	<input type="file" id="new_image" name="new_image"/></p>'."\n";
 $image_form_output .= '	<button class="btn primary save" name="submit" type="submit" value="save"><i></i>Save</button>'."\n";

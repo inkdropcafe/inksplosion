@@ -1,8 +1,6 @@
 <?php
 
-/*****
- * Setup
- */
+// ! ------ Setup
 
 require_once('panl.init.php');
 require_once('lib/htmLawed.php');
@@ -15,9 +13,11 @@ $marker = new GrlxMarker;
 $fileops = new GrlxFileOps;
 $sl = new GrlxSelectList;
 
+$max_file_size = ini_get( 'upload_max_filesize' ).'B maximum';
+
 $view-> yah = 3;
 
-$var_list = array('page_id','new_page_name','remove_id','blog_headline','sort_order','custom_url');
+$var_list = array('action','page_id','new_page_name','remove_id','blog_headline','sort_order','custom_url','created');
 if ( $var_list ) {
 	foreach ( $var_list as $key => $val ) {
 		$$val = register_variable($val);
@@ -34,6 +34,7 @@ if ( $page_id && !is_numeric($page_id))
 	header('location:book.view.php');
 	die();
 }
+
 
 for ( $i=1; $i<32; $i++ ) {
 	$i < 10 ? $i = '0'.$i : null;
@@ -102,10 +103,12 @@ if ( !$page_id ) {
 
 
 
-/////// ! Updates
+// ! ------ Updates
+
+// ! Create new images
 
 $which = 'new_file';
-if ( $_FILES[$which] && count($_FILES[$which]['name']) > 0 ) {
+if ( $_FILES[$which] && $_FILES[$which]['name'][0] != '' ) {
 	foreach ( $_FILES[$which]['name'] as $key => $val ) {
 		$serial = date('YmdHis').substr(microtime(),2,6);
 		$path = '/'.DIR_COMICS_IMG.$serial;
@@ -114,30 +117,8 @@ if ( $_FILES[$which] && count($_FILES[$which]['name']) > 0 ) {
 		// Move the file to its new home.
 		$success1 = move_uploaded_file($_FILES[$which]['tmp_name'][$key], '..'.$path.'/'.$val);
 		if ( !$success1 ) {
-			if ( !is_writable('..'.$path)) {
-
-				$alert_output .= $message->alert_dialog('Unable to upload image. Looks like a folder permissions problem.');
-			}
-			else {
-				// See http://php.net/manual/en/features.file-upload.errors.php
-				switch ( $_FILES[$which]['error'][$key] ) {
-					case 1:
-						$alert_output .= $message->alert_dialog('I couldn’t upload the image. It exceeded the server’s '.(ini_get( 'upload_max_filesize' )).'B file size limit.');
-						break;
-					case 2:
-						$alert_output .= $message->alert_dialog('I couldn’t upload the image. It exceeded the server’s '.(ini_get( 'upload_max_filesize' )).'B file size limit.');
-						break;
-					case 3:
-						$alert_output .= $message->alert_dialog('I couldn’t receive the image. There was nothing to receive.');
-						break;
-					case 6:
-						$alert_output .= $message->alert_dialog('I couldn’t receive the image. There was no “temp” folder on the server — contact your host.');
-						break;
-					case 8:
-						$alert_output .= $message->alert_dialog('I couldn’t upload the image. It doesn’t look like a PNG, GIF, JPG, JPEG or SVG.');
-						break;
-				}
-			}
+			$result = report_image_error($image_info,$_FILES[$which]['error'][$key]);
+			$alert_output .= $message->alert_dialog($result);
 		}
 		else {
 			$data = array(
@@ -158,10 +139,12 @@ if ( $_FILES[$which] && count($_FILES[$which]['name']) > 0 ) {
 	}
 }
 
-$which = 'file_change';
-if ( $_FILES[$which] && count($_FILES[$which]['name']) > 0 ) {
-	foreach ( $_FILES[$which]['name'] as $key => $val ) {
+// ! Replace existing images
 
+$which = 'file_change';
+if ( $_FILES[$which] ) {
+
+	foreach ( $_FILES[$which]['name'] as $key => $val ) {
 		// If there’s a folder to hold the previous image, use it for this new image.
 		if (
 			$_POST['original_path'][$key]
@@ -243,6 +226,7 @@ if ( $_FILES[$which] && count($_FILES[$which]['name']) > 0 ) {
 	}
 }
 
+// ! Metadata
 
 if ( $page_id && $_POST ) {
 
@@ -318,6 +302,8 @@ EOL;
 	}
 }
 
+// ! Blog post and transcript
+
 if ( $page_id && $_POST ) {
 
 	$blog_post = htmLawed($blog_post);
@@ -353,7 +339,7 @@ if ( $page_id && $sort_order && $_POST )
 
 
 
-/////// ! Display logic
+// ! ------ Display logic
 
 if ( $page_id ) {
 	$page = new GrlxComicPage($page_id);
@@ -369,7 +355,7 @@ $sl-> setCurrent(substr($page-> pageInfo['date_publish'],0,4));
 $sl-> setList($year_list);
 $sl-> setValueID('id');
 $sl-> setValueTitle('title');
-$sl-> setStyle('width:4rem');
+$sl-> setStyle('width:6rem');
 $year_select_output = $sl-> buildSelect();
 
 $sl-> setName('pub_month');
@@ -377,7 +363,7 @@ $sl-> setCurrent(substr($page-> pageInfo['date_publish'],5,2));
 $sl-> setList($month_list);
 $sl-> setValueID('id');
 $sl-> setValueTitle('title');
-$sl-> setStyle('width:8rem');
+$sl-> setStyle('width:9rem');
 $month_select_output = $sl-> buildSelect();
 
 $sl-> setName('pub_day');
@@ -385,7 +371,7 @@ $sl-> setCurrent(substr($page-> pageInfo['date_publish'],8,2));
 $sl-> setList($day_list);
 $sl-> setValueID('id');
 $sl-> setValueTitle('title');
-$sl-> setStyle('width:3rem');
+$sl-> setStyle('width:5rem');
 $day_select_output = $sl-> buildSelect();
 
 if ( $hour_list )
@@ -399,7 +385,7 @@ if ( $hour_list )
 		else {
 			$selected = '';
 		}
-		$hour_select_output .= '<option value="'.$key.'"'.$selected.'>'.$val.'</option>'."aaaa\n";
+		$hour_select_output .= '<option value="'.$key.'"'.$selected.'>'.$val.'</option>'."\n";
 	}
 	$hour_select_output .= '</select>'."\n";
 }
@@ -422,10 +408,8 @@ $meta_output .= $hour_select_output."\n";
 
 
 
+// ! Back/next
 
-// I think it’s time we blow this thing.
-// Get everybody and their stuff together.
-// OK, three two one let’s jam.
 if ( $book-> pageList ) {
 
 	$last = end($book-> pageList);
@@ -453,7 +437,6 @@ if ( $book-> pageList ) {
 	if ( $last_id == $page_id ) {
 		unset($last_page_id);
 	}
-
 }
 
 
@@ -493,6 +476,74 @@ else {
 
 
 
+// ! Create thumbnails, if they don’t exist.
+// This needs to happen here so we have imageList available.
+
+$gd_enabled = FALSE; // Until proven otherwise
+$gd_info = gd_info();
+if ($gd_info && $gd_info['GD Version'] != '')
+{
+	$gd_enabled = TRUE;
+
+	// ! How big should thumbnails be?
+	$db->where('label','thumb_max');
+	$result = $db->getOne('milieu','value');
+
+	if ($result)
+	{
+		$thumb_max = $result['value'];
+	}
+	else
+	{
+		$thumb_max = 200;
+	}
+}
+
+// Actually make the new files.
+
+if ( $page->imageList && $action == 'gen-thumb')
+{
+	$created_thumbs = FALSE;
+	$success = FALSE;
+	foreach ( $page->imageList as $key => $val )
+	{
+		if (substr($val['url'],0,4) != 'http')
+		{
+			// Get the directory.
+			$dir = explode('/',$val['url']);
+
+			// Get the extension.
+			$filename = array_pop($dir);
+			$filename = explode('.',$filename);
+			$extension = array_pop($filename);
+
+			// Put it back together.
+			$dir = implode('/',$dir);
+
+			// Figure out the filenames with paths.
+			$thumb_filename = '..'.$milieu_list['directory']['value'].$dir.'/thumb.'.$extension;
+			$source_file = '..'.$val['url'];
+			$success = create_thumbnail( $source_file, $thumb_filename, $thumb_max);
+			if ($success === TRUE)
+			{
+				$created_thumbs = TRUE;
+			}
+		}
+	}
+}
+if ($created_thumbs && $created_thumbs === TRUE )
+{
+	$alert_output .= $message->success_dialog('Thumbnail created.');
+}
+if ($action == 'gen-thumb' && $created_thumbs === FALSE )
+{
+	$alert_output .= $message->warning_dialog('Thumbnail not created.');
+}
+
+
+
+
+
 // Display each image. Let the user trash ’em as needed.
 
 if ( $page-> imageList ) {
@@ -514,7 +565,7 @@ if ( $page-> imageList ) {
 			$delete_me = $link1-> paint();
 		}
 
-		if ( is_file('../'.$milieu_list['directory']['value'].$val['url'])) {
+		if ( substr($val['url'],0,4) != 'http' && is_file('../'.$milieu_list['directory']['value'].$val['url'])) {
 			$image_dimensions = getimagesize('../'.$milieu_list['directory']['value'].$val['url']);
 			$image_bytes = filesize('../'.$milieu_list['directory']['value'].$val['url']);
 			$weight = figure_pixel_weight($image_dimensions[0],$image_dimensions[1],$image_bytes);
@@ -525,9 +576,15 @@ if ( $page-> imageList ) {
 		}
 		$weight = round($weight,3);
 
-		!$milieu_list['directory']['value'] || $milieu_list['directory']['value'] == '' ? $url_prefix = '../' : $url_prefix = '../';
-
-		$this_image = '<img src="'.$url_prefix.$milieu_list['directory']['value'].$val['url'].'" alt="'.$val['description'].'"/>'."\n";
+		if (substr($val['url'],0,4) == 'http')
+		{
+			$this_image = '<img src="'.$val['url'].'" alt="'.$val['description'].'"/>'."\n";
+		}
+		else
+		{
+			!$milieu_list['directory']['value'] || $milieu_list['directory']['value'] == '' ? $url_prefix = '../' : $url_prefix = '../';
+			$this_image = '<img src="'.$url_prefix.$milieu_list['directory']['value'].$val['url'].'" alt="'.$val['description'].'"/>'."\n";
+		}
 
     $link1-> title = 'Learn more about pixel weight';
     $link1-> url = 'http://getgrawlix.com/docs/'.DOCS_VERSION.'/image-optimization';
@@ -555,8 +612,9 @@ if ( $page-> imageList ) {
 $row_divider
 <div class="row">
 	<div class="medium-4 columns">
-			<input type="file" name="file_change[$ref_id]" value=""/><br/>
-			<button class="btn secondary upload" id="submit" name="edit-submit" type="submit" value="save"/><i></i>Replace</button><br/>
+		<p>Upload a new file ($max_file_size)</p>
+		<input type="file" name="file_change[$ref_id]" value=""/><br/>
+		<button class="btn secondary upload" id="submit" name="edit-submit" type="submit" value="save"/><i></i>Replace</button><br/>
 		<br/><p>$this_weight</p>
 		<p>$delete_me</p>
 	</div>
@@ -578,8 +636,9 @@ EOL;
 $row_divider
 <div class="row">
 	<div class="medium-6 columns">
-			<input type="file" name="file_change[$ref_id]" value=""/><br/>
-			<button class="btn secondary upload" id="submit" name="edit-submit" type="submit" value="save"/><i></i>Replace</button><br/>
+		<p>Upload a new file ($max_file_size)</p>
+		<input type="file" name="file_change[$ref_id]" value=""/><br/>
+		<button class="btn secondary upload" id="submit" name="edit-submit" type="submit" value="save"/><i></i>Replace</button><br/>
 		<p>$this_description
 		$this_weight</p>
 		<p>$delete_me</p>
@@ -602,7 +661,7 @@ $main_image_output .= <<<EOL
 <hr/>
 <div class="row">
 	<div class="medium-12 columns">
-		<p>New image for this page</p>
+		<p>New image for this page ($max_file_size)</p>
 		<input type="file" name="new_file[]" value=""/><br/>
 		<button class="btn secondary upload" id="submit" name="add-submit" type="submit" value="save"/><i></i>Upload</button><br/>
 	</div>
@@ -660,12 +719,29 @@ EOL;
 
 
 
+if ($page->imageList)
+{
+	if ($gd_enabled === TRUE)
+	{
+		$thumb_output = '<a class="btn secondary upload" href="?page_id='.$page_id.'&action=gen-thumb">Generate thumbnail</a>'."\n";
+	}
+	else
+	{
+		$thumb_output = 'Your web host does not allow thumbnail generation.';
+	}
+}
 
 
 
 
-
-//$content_output = '<hr />';
+if ($thumb_output)
+{
+	$view->group_css('page');
+	$view->group_h2('Thumbnail');
+	$view->group_contents($thumb_output);
+	$view->group_instruction('Create an image to represent this page.');
+	$content_output .= $view->format_group().'<hr />';
+}
 
 $link1-> url('http://www.getgrawlix.com/docs/'.DOCS_VERSION.'/seo');
 $link1-> tap('Metadata');
@@ -694,10 +770,14 @@ $view->group_instruction('Transcript is a record of the the dialog, events and s
 $view->group_contents($transcript_output);
 $content_output .= $view->format_group();
 
+if ($created == 1)
+{
+	$alert_output .= $message->success_dialog('Page created. <a href="book.page-create.php">Make another</a>?');
+}
 
 
 
-/////// ! Display
+// ! ------ Display
 
 $view->page_title("Comic page: $heading_output");
 $view->tooltype('chap');
@@ -707,8 +787,6 @@ $view->action($action_output);
 $output  = $view->open_view();
 $output .= $view->view_header();
 $output .= $alert_output;
-//$output .= $modal->modal_container();
-//$output .= $content_output;
 print($output);
 
 ?>

@@ -50,11 +50,10 @@ $panel_files = array(
 	'ajax.tone-set.php',
 	'ajax.visibility-toggle.php',
 	'book.archive.php',
+	'book.import-wp.php',
 	'book.bulk-upload.php',
-//	'book.comic-create.php',
 	'book.edit.php',
 	'book.import.php',
-//	'book.list.php',
 	'book.page-create.php',
 	'book.page-edit.php',
 	'book.view.php',
@@ -102,6 +101,12 @@ $panel_files = array(
 	'xtra.toggle-active.ajax.php',
 	'xtra.toggle-wonderful-active.ajax.php'
 );
+
+$optional_files = array(
+	'book.book-create.php',
+	'book.list.php'
+);
+
 
 /*****
  * Functions
@@ -459,7 +464,7 @@ if ( $missing_panel ) {
 $admin_existing_list = $fileops->get_dir_list('.');
 if ( $admin_existing_list ) {
 	foreach ( $admin_existing_list as $key => $val ) {
-		if ( !in_array($val, $panel_files)) {
+		if ( !in_array($val, $panel_files) && !in_array($val, $optional_files)) {
 			$extra_panel_files[] = $val;
 		}
 	}

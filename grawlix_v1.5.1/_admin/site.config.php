@@ -3,9 +3,7 @@
 /* Artists use this script to control general site settings.
  */
 
-/*****
- * Setup
- */
+/* ! Setup */
 
 require_once('panl.init.php');
 require_once('lib/htmLawed.php');
@@ -176,10 +174,13 @@ $timezone_master_list['America/Anchorage'] = array(
 	'title' => 'UTC−09:00: Anchorage'
 );
 
+// Get a list of books.
+$db->orderBy('sort_order,title', 'ASC');
+$book_list = $db->get('book',NULL,'id,title');
 
-/*****
- * Updates
- */
+
+
+/* ! Updates */
 
 
 $book_id = $_POST['book_id'];
@@ -189,6 +190,7 @@ if ( !$book_id ) {
 	$book_id = $book->bookID;
 }
 
+/*
 $options_list = array (
 //	'title'  => 'Comic page title',
 	'image'  => 'Comic image',
@@ -196,7 +198,9 @@ $options_list = array (
 	'blog'   => 'Blog post',
 	'transcript' => 'Transcript'
 );
+*/
 
+/*
 if ( $_POST['submit'] == 'save' )
 {
 	$args['rssNew'] = $_POST['rss_options'];
@@ -204,6 +208,7 @@ if ( $_POST['submit'] == 'save' )
 
 $args['bookID'] = $book_id;
 $xml = new GrlxXML_Book($args);
+*/
 
 
 // Save changes to milieu items
@@ -272,10 +277,9 @@ if ( $_POST['submit'] ) {
 }
 
 
-/*****
- * Display logic
- */
+/* ! Display logic */
 
+/*
 if ( $options_list ) {
 	foreach ( $options_list as $key => $val ) {
 
@@ -298,6 +302,7 @@ if ( $options_list ) {
 		$rss_options_output .= '</div>';
 	}
 }
+*/
 
 
 
@@ -315,15 +320,39 @@ $db->where('label', 'directory');
 $site_directory = $db->getOne('milieu', 'value');
 $site_directory = 'http://'.$_SERVER['SERVER_NAME'].$site_directory['value'];
 
-$locations_output .= '<div class="row form config">'."\n";
-$locations_output .= '	<div><strong>RSS:</strong></div><div><a href="'.$site_directory.'rss">'.$site_directory.'rss</a></div>'."\n";
-$locations_output .= '</div>'."\n";
-$locations_output .= '<div class="row form config">'."\n";
-$locations_output .= '	<div><strong>JSON:</strong></div><div><a href="'.$site_directory.'json">'.$site_directory.'json</a></div>'."\n";
-$locations_output .= '</div>'."\n";
+/*
+if ( $book_list )
+{
+	foreach($book_list as $key => $val)
+	{
+	$locations_output .= '<div class="">'."\n";
+	$locations_output .= '	<strong>'.$val['title'].'</strong><br/>'."\n";
+	$locations_output .= '	<a href="'.$site_directory.'rss?id='.$val['id'].'">RSS</a> | '."\n";
+	$locations_output .= '	<a href="'.$site_directory.'json?id='.$val['id'].'">JSON</a>'."\n";
+	$locations_output .= '</div><br/>'."\n";
+	}
+}
+*/
 
 
 
+// ! Add thumbnail option, if necessary.
+
+$db->where('label','thumb_max');
+$result = $db->getOne('milieu','id');
+if (!$result || !$result['id'])
+{
+	$data = array(
+		'title' => 'Thumbnail size',
+		'description' => 'Thumbnails’ maximum dimension',
+		'label' => 'thumb_max',
+		'value' => '200',
+		'milieu_type_id' => '1',
+		'data_type' => 'int',
+		'sort_order' => '8'
+	);
+	$db->insert('milieu', $data);
+}
 
 
 // Get Google Analytics info
@@ -438,10 +467,6 @@ else {
 	}
 }
 
-// Get default book id
-$book = new GrlxComicBook;
-$book_id = $book->bookID;
-$book_title = $book->info['title'];
 
 // Get static home page id
 $result = $db
@@ -466,10 +491,17 @@ if ( $home['rel_type'] == 'static' ) {
 // Site homepage settings
 if ( $home && $book_id && $static_id ) {
 	$home_instruction = 'Your site’s home can display the latest comic or a static page.';
-	$home_list[] = array(
-		'id' => 'book-'.$book_id,
-		'title' => 'Latest page of “'.$book_title.'”'
-	);
+	if ( $book_list )
+	{
+		foreach ( $book_list as $key => $val )
+		{
+			$home_list[] = array(
+				'id' => 'book-'.$val['id'],
+				'title' => 'Latest page of “'.$val['title'].'”'
+			);
+		}
+	}
+
 	$home_list[] = array(
 		'id' => 'static-'.$static_id,
 		'title' => 'Static home page'
@@ -490,8 +522,6 @@ $link-> url('http://www.getgrawlix.com/docs/'.DOCS_VERSION.'/settings');
 $link-> tap('Read the docs');
 $instruction = 'Use this panel to customize your overall site. '.$link-> external_link().' for details.';
 
-$content_output = $form->open_form();
-
 $view->page_title('Site settings');
 $view->tooltype('config');
 $view->headline('Site settings');
@@ -507,6 +537,7 @@ $view->group_instruction($home_instruction);
 $view->group_contents($home_output);
 $home_output = $view->format_group();
 
+/*
 $view->group_h2('Feed options');
 $view->group_instruction('Choose which bits of information readers will see in their RSS and JSON feeds.');
 $view->group_contents($rss_options_output);
@@ -516,19 +547,19 @@ $view->group_h3('Feed locations');
 $view->group_instruction('Where to find your site’s feeds.');
 $view->group_contents($locations_output);
 $locations_output = $view->format_group();
+*/
 
 
 
-/*****
- * Display
- */
+/* ! Display */
 
 $output  = $view->open_view();
 $output .= $view->view_header();
+$output .= $form->open_form();
 $output .= $alert_output;
 $output .= $content_output.'<hr/>';
-$output .= $feed_options_output;
-$output .= $locations_output.'<hr/>';
+//$output .= $feed_options_output;
+//$output .= $locations_output.'<hr/>';
 $output .= $home_output.'<hr/>';
 $output .= $form->form_buttons($edit_home);
 $output .= $form->close_form();

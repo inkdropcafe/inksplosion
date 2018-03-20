@@ -57,8 +57,6 @@ $view-> yah = 6;
 
 
 if ( $msg == 'created' ) {
-	$link-> url('site.nav.php');
-	$link-> tap('Add this page to the site’s menu');
 	$alert_output .= $message->success_dialog('New page built. Add your content below.');
 }
 
@@ -257,7 +255,7 @@ if ( $content_list )
 
 	$list-> headings($heading_list);
 	$list-> draggable(false);
-	$list-> row_class('chapter');
+	$list-> row_class('content-blocks');
 
 
 	foreach ( $content_list as $key => $val )
@@ -276,7 +274,7 @@ if ( $content_list )
 		}
 		else
 		{
-			$preview = "(No image)\n";
+			$preview = "-";
 		}
 
 		$order  = '<input type="hidden" name="original_sort_order['.$val['id'].']" value="'.$val['sort_order'].'"/>';
@@ -305,33 +303,16 @@ if ( $content_list )
 
 if ( $page_id )
 {
-	$block_output .= '<a href="sttc.block-edit.php?page_id='.$page_id.'" class="create btn primary new">Create a block</a>'."\n";
+	$block_output .= '<a href="sttc.block-edit.php?page_id='.$page_id.'" class="create btn primary new"><i></i>Create a block</a>'."\n";
 }
 
 
 
 
 // Which theme directory does this site use?
-$sql = "
-SELECT
-	gtl.directory
-FROM
-	".DB_PREFIX."milieu gm,
-	".DB_PREFIX."theme_tone gtt,
-	".DB_PREFIX."theme_list gtl
-WHERE
-	gm.label = 'tone_id'
-	AND gtt.id = gm.value
-	AND gtt.theme_id = gtl.id
-";
+$theme_directory = get_current_theme_directory($db);
 
-$result = $db->rawQuery($sql,FALSE,FALSE);
-
-if ( $result && is_array($result))
-{
-	$theme_directory = $result[0]['directory'];
-}
-else
+if (!$theme_directory || $theme_directory === FALSE)
 {
 	$alert_output .= $message->alert_dialog('I couldn’t determine the <a href="./site.theme-manager.php">site’s theme</a>, and so can’t find any theme pattern files.');
 }
@@ -341,7 +322,7 @@ else
 
 // Scan the current theme for pattern files in case the user
 // renamed some or created new ones.
-if ( $theme_directory )
+if ( $theme_directory && $theme_directory !== FALSE)
 {
 	$file_list = scandir('../themes/'.$theme_directory);
 	if($file_list)
@@ -358,30 +339,15 @@ if ( $theme_directory )
 }
 
 // Build a list to let the artist chooses a pattern for this static page.
+
 if ( $pattern_order_list )
 {
-	$order_output = '<select name="pattern_id" style="width:200px">'."\n";
-	foreach($pattern_order_list as $order_key => $order_label)
-	{
-		if ( $order_key == $page_info['options'] )
-		{
-			$selected = ' selected="selected"';
-		}
-		else {
-			$selected = '';
-		}
-		$order_output .= '<option id="'.$order_key.'" value="'.$order_key.'"'.$selected.'/> '.$order_label.'</option>'."\n";
-	}
-	$order_output .= '</select>'."\n";
+	$order_output = build_select_simple('pattern_id',$pattern_order_list, $page_info['options'],'width:200px');
 }
 else {
-	if ( $theme_directory && $theme_directory != '' )
+	if ( !$theme_directory )
 	{
-		$folder_name = $theme_directory;
-	}
-	else
-	{
-		$folder_name = '(unknown)';
+		$theme_directory = '(unknown)';
 	}
 	$order_output = 'I couldn’t find any <a href="http://www.getgrawlix.com/docs/'.DOCS_VERSION.'/static-patterns">pattern files</a> in the /themes/'.$folder_name.' folder.';
 }
@@ -390,7 +356,7 @@ else {
 $form->row_class('widelabel');
 $order_output = '
 <div class="'.$form->row_class.'">
-		<label>Blocks’ pattern</label>
+		<label>Default block pattern</label>
 '."\n".$order_output."\n";
 
 
@@ -438,7 +404,7 @@ $link->tap('Back to list');
 $action_output = $link->text_link('back');
 
 $link->url('..'.$static-> info['url']);
-$link->tap('View live page');
+$link->tap('View page live');
 $action_output .= $link->button_secondary('view');
 
 $view->action($action_output);
@@ -454,18 +420,18 @@ $view->group_css('Layout');
 $view->group_h2('Metadata');
 $view->group_instruction('General information for this static page.');
 $view->group_contents($settings_form);
-$settings_output = $view->format_group().$form->form_buttons().'<hr />';
+$settings_output = $view->format_group().'<hr />';
 $form_output .= $form->form_buttons();
 
 $view->group_h2('Layout');
 $view->group_contents($layout_form);
-$view->group_instruction('Content block arrangement. “Patterns” are how each block’s image, text, etc. are laid out in HTML. Edit them in your site’s /themes/'.$theme_directory.' folder.');
+$view->group_instruction('Content block arrangement. “Patterns” are how each block’s image, text, etc. are laid out in HTML. Edit them in your site’s /themes/'.$theme_directory.' folder, and override them per block.');
 $layout_output = $view->format_group().'<hr/>';
 
 $view->group_h2('Content blocks');
 $view->group_contents($block_output);
 $view->group_instruction('Stuff the readers see. Each block represents a “chunk” of information that may include a title, an image, a paragraph or two, HTML, and a link to another website.');
-$content_output = $view->format_group().$form->form_buttons();
+$content_output = $view->format_group();
 
 
 
@@ -482,6 +448,7 @@ $output .= $layout_output;
 $output .= $content_output;
 
 print($output);
+print('<hr/><button class="btn primary save right" name="submit" type="submit" value="save"/><i></i>Save</button>');
 
 $output  = $form->close_form();
 $output .= $view->close_view();

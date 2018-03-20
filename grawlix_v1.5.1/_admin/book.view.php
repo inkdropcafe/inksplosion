@@ -1,8 +1,6 @@
 <?php
 
-/*****
- * Setup
- */
+/* ! Setup */
 
 require_once('panl.init.php');
 
@@ -18,12 +16,22 @@ $marker = new GrlxMarker;
 $view-> yah = 3;
 
 $var_list = array(
-	'book_id','delete_page_id','start_sort_order','keyword','delete_marker_id','sel','add_marker_type','delete_all'
+	'created','book_id','delete_page_id','start_sort_order','keyword','delete_marker_id','sel','add_marker_type','delete_all'
 );
 if ( $var_list ) {
 	foreach ( $var_list as $key => $val ) {
 		$$val = register_variable($val);
 	}
+}
+
+if ($book_id)
+{
+	$_SESSION['book_id'] = $book_id;
+}
+
+if($created == 1)
+{
+ $alert_output .= $message->success_dialog('Book created. <a href="book.page-create.php">Now give it a page</a>.');
 }
 
 if ( $start_sort_order && is_numeric($start_sort_order) )
@@ -41,9 +49,7 @@ else {
 
 
 
-/*****
- * Updates
- */
+// ! ------ Updates
 
 if ( $book_id ) {
 	$book = new GrlxComicBook($book_id);
@@ -141,9 +147,9 @@ if ( $_POST && $_POST['sort_order'] ) {
 
 if ( $delete_marker_id ) {
 	$doomed_marker = new GrlxMarker($delete_marker_id);
-	if ( $doomed_marker-> markerInfo ) {
+//	if ( $doomed_marker-> markerInfo ) {
 		$doomed_marker-> deleteMarker($delete_marker_id,false);
-	}
+//	}
 }
 if ( $delete_page_id && is_numeric($delete_page_id) ) {
 	$doomed_page = new GrlxComicPage($delete_page_id);
@@ -180,11 +186,9 @@ if ( $delete_all && 1==2 ) {
 }
 
 
-/*****
- * Display logic
- */
+// ! ------ Display logic
 
-///// Get the book info
+// ! Get the book info
 
 if ( $book_id ) {
 	$book = new GrlxComicBook($book_id);
@@ -228,10 +232,10 @@ $marker_type_list = rekey_array($marker_type_list,'id');
 
 
 
-///// Alerts and warnings
+// ! Alerts and warnings
 
 if ( !$book-> info ) {
-	$alert_output .= $message->alert_dialog('This book ID '.$book_id.' doesn’t seem to exist.');
+	$alert_output .= $message->alert_dialog('Book ID '.$book_id.' doesn’t seem to exist.');
 }
 
 if ( !is_dir('../'.DIR_COMICS_IMG)) {
@@ -242,22 +246,10 @@ elseif ( !is_writable('../'.DIR_COMICS_IMG) ) {
 	$alert_output .= $message->alert_dialog('I can’t work with the '.DIR_COMICS_IMG.' folder. Looks like a permissions problem you need to fix via FTP.');
 }
 
-/*
-$link-> title = 'Add a marker';
-$link-> url = 'marker.create.php';
-$link-> tap = 'Do something about that';
 
-if ( !$book-> markerList && $book-> pageList ) {
-	$alert_output .= $message->info_dialog('Hmm, no chapters here. '.$link-> paint().'.');
-}
-elseif ( !$book-> markerList && !$book-> pageList ) {
-	$alert_output .= $message->info_dialog('Hmm, no chapters here. No pages either. <a href="marker.create.php">Do something about that</a>.');
-}
-*/
-
-if ( !$book-> pageList) {
+if ( $book->info && !$book-> pageList && !$created ) {
 	$link-> title('Add a set of pages');
-	$link-> url('book.pages-create.php');
+	$link-> url('book.page-create.php');
 	$link-> tap('Do something about that');
 
 	$alert_output .= $message->info_dialog('Hmm, no pages here. '.$link->text_link().'.');
@@ -267,9 +259,10 @@ if ( !$book-> pageList) {
 
 
 
-///// Display the list
+// ! Display the list
 
-if ( $book-> pageList ) {
+if ( $book-> pageList && count($book-> pageList) > 0 )
+{
 
 	$edit_link = new GrlxLinkStyle;
 	$edit_link->url('book.page-edit.php');
@@ -291,10 +284,6 @@ if ( $book-> pageList ) {
 //	$marker_link->tap('Remove marker');
 
 
-	$heading_list[] = array(
-		'value' => 'Select',
-		'class' => null
-	);
 	$heading_list[] = array(
 		'value' => 'Title',
 		'class' => null
@@ -370,14 +359,21 @@ if ( $book-> pageList ) {
 			}
 
 			// Build the sort_order field.
-			$form-> input_number('sort_order['.$val['id'].']');
-			$form-> value(intval($val['sort_order']));
-			$form-> name('sort_order['.$val['id'].']');
-			$form-> size($field_size);
-			$order = $form-> paint();
+			if (count($book-> pageList) > 1)
+			{
+				$form-> input_number('sort_order['.$val['id'].']');
+				$form-> value(intval($val['sort_order']));
+				$form-> name('sort_order['.$val['id'].']');
+				$form-> size($field_size);
+				$order = $form-> paint();
+			}
+			else
+			{
+				$order = floor($val['sort_order']);
+			}
 
 			// Build the selection checkbox.
-			$select = '<input type="checkbox" name="sel['.$val['id'].']" value="'.$val['id'].'"/>'."\n";
+//			$select = '<input type="checkbox" name="sel['.$val['id'].']" value="'.$val['id'].'"/>'."\n";
 
 			// Keep track of the original order values so we can
 			// compare against the artist’s entries. If they’re
@@ -431,7 +427,6 @@ if ( $book-> pageList ) {
 
 			// Assemble the list item.
 			$list_items[$val['id']] = array(
-				'select'=> $select,
 				'title'=> $link-> paint(),
 				'sort_order'=> $order,
 				'marker'=> $this_marker,
@@ -445,26 +440,24 @@ if ( $book-> pageList ) {
 	}
 
 	// Mix it all together.
-	$list->content($list_items);
-	$content_output  = $list->format_headings();
-	$content_output .= $list->format_content();
-
+	if ($list_items && count($list_items) > 0)
+	{
+		$list->content($list_items);
+		$content_output  = $list->format_headings();
+		$content_output .= $list->format_content();
+		if (count($list_items) > 1)
+		{
+			$content_output .= '<br/><button class="btn primary save" name="submit" id="sort-with-me" type="submit" value="reorder"><i></i>Sort</button>&nbsp;';
+		}
+	}
 }
+			$content_output .= '<a class="btn primary new" href="book.page-create.php"><i></i>Add page</a>';
 
 
-/*
-if ( $marker_type_list ) {
-
-	$sl-> setName('add_marker_type');
-	$sl-> setList($marker_type_list);
-//	$sl-> setCurrent();
-	$sl-> setValueID('id');
-	$sl-> setValueTitle('title');
-	$sl-> setStyle('width:12rem');
-	$select_options = $sl-> buildSelect().'<br/>'."\n";
-
+if ( (!$book-> pageList || count($book-> pageList) == 0 || !$content_output) && $created != 1 )
+{
+	$content_output = 'No pages found.';
 }
-*/
 
 
 $link-> url('book.view.php');
@@ -490,92 +483,34 @@ if ( $total_pages > $pages_per_view ) {
 }
 
 
-/*****
- * Display
- */
+//* ! ------ Display
 
 $view->page_title('Book: '.$book-> info['title']);
 $view->tooltype('book');
 $view->headline('Book <span>'.$book-> info['title'].'</span>');
 
+$action_output = ''; // reset
+
+if (is_file('book.list.php'))
+{
+	$link->url('book.list.php');
+	$link->tap('Switch books');
+	$link->id('switch-books');
+	$action_output = $link->text_link('back');
+}
+
 $link->url('book.edit.php?book_id='.$book_id);
-$link->tap('Edit comic info');
+$link->tap('Edit book info');
 $link->id('edit-comic-info');
-$action_output = $link->text_link('editmeta');
+$action_output .= $link->text_link('editmeta');
 
-
-/*
-$link->url('marker.create.php');
-$link->tap('Add pages');
-$link->reveal(false);
-$action_output .= $link->button_secondary('new');
-*/
 $view->action($action_output);
 
 
-/*
-$view->group_h2('New pages');
-$view->group_instruction('INSTRUCTIONS GO HERE');
-$view->group_contents($new_pages_output);
-$content_output .= $view->format_group().'<hr/>';
-*/
-
-
-
-/*
-$link->url('ajax.book-edit.php?book_id='.$book_id);
-$link->tap('Edit comic meta');
-$link->reveal(true);
-$action_output = $link->text_link('editmeta');
-$view->action($action_output);
-
-if ( $_GET['tour'] ) {
-	$joyride = <<<EOL
-	<ol class="joyride-list" data-joyride data-options="tip_location:left;">
-	  <li data-id="edit-comic-info" data-button="Next">
-	    <p><strong>Edit comic info:</strong> Change your book’s title, publish frequency and marker types.</p>
-	  </li>
-	  <li data-id="th-4" data-button="Next" data-prev-text="Prev" data-options="tip_location:bottom;">
-	    <p><strong>Markers:</strong> Add or remove chapters, scenes or other sections.</p>
-	  </li>
-	  <li data-id="th-3" data-button="Next" data-prev-text="Prev" data-options="tip_location:top;">
-	    <p><strong>Order:</strong> Rearrange your pages by changing their numbers …</p>
-	  </li>
-	  <li data-id="sort-with-me" data-button="Done" data-prev-text="Prev" data-options="tip_location:bottom;">
-	    <p>… then tap here to execute the move.</p>
-	  </li>
-	</ol>
-EOL;
-	$view->setJoyride($joyride);
-}
-*/
-
-// Group
-
-if ( $total_shown > 1 ) {
-
-	// Group
-	$view->group_h2('Reorder pages');
-	$view->group_instruction('Change the pages’ numbers above to move them around the book.');
-	$view->group_contents('<button class="btn primary save" name="submit" id="sort-with-me" type="submit" value="reorder"><i></i>Sort</button>'."\n");
-	$reorder_output .= $view->format_group();
-}
-
-/*
-$link-> title('Learn more about markers');
-$link-> url('http://www.getgrawlix.com/docs/'.DOCS_VERSION.'/markers');
-$link-> tap('Markers');
-
-$view->group_h2('Add marker');
-$view->group_instruction($link-> external_link().' are sections of a book, like chapters, scenes or supplemental material. Use the checkboxes above to choose page(s) to begin new sections.');
-$view->group_contents(
-	$select_options .
- '<button class="btn primary new" name="submit" type="submit" value="add"><i></i>Add</button>'
-);
-$select_output .= $view->format_group();
-*/
-
-$search_form = <<<EOL
+// No sense letting people search when there are no pages.
+if ($book->pageList && count($book->pageList) > $pages_per_view)
+{
+	$search_form = <<<EOL
 <div class="row">
 	<div class="large-12 columns">
 		<div class="row">
@@ -586,15 +521,11 @@ $search_form = <<<EOL
 				<button class="btn secondary search" name="submit" type="submit" value="reorder"><i></i>Search</button>
 			</div>
 		</div>
-		<!--div class="row">
-			<div class="small-12 columns">
-				<a href="?delete_all=1" class="warning">DELETE ALL</a> — there is no undo!
-			</div>
-		</div-->
 	</div>
 </div>
 
 EOL;
+}
 
 
 $output  = $view->open_view();
@@ -606,84 +537,8 @@ $output .= $search_form;
 $output .= $content_output;
 $output .= $orig_output;
 $output .= $pagination_output;
-//$output .= '<hr />'.$select_output;
-if ( $total_shown > 1 ) {
-	$output .= '<br/>'.$reorder_output;
-}
-
 $output .= '</form>'."\n";
 
 print($output);
 
-
-
-
-/*
-$js_call = <<<EOL
-	$( "i.sort" ).hover( // highlight a draggable row
-		function() {
-			$( this ).parent().parent().addClass("dragging");
-		}, function() {
-			$( this ).parent().parent().removeClass("dragging");
-		}
-	);
-	$( "a.edit" ).hover( // highlight the editable item
-		function() {
-			$( this ).parent().parent().addClass("editme");
-		}, function() {
-			$( this ).parent().parent().removeClass("editme");
-		}
-	);
-	$( "i.delete" ).hover( // highlight a row to be deleted
-		function() {
-			$( this ).parent().parent().addClass("red-alert");
-		}, function() {
-			$( this ).parent().parent().removeClass("red-alert");
-		}
-	);
-	$( '[id^="id-"]' ).click( // delete item
-		function() { // update the db
-			var item = $(this).attr('id'); // id of the item to delete
-			var container = $('#'+item).parent().parent();
-			$.ajax({
-				url: "ajax.book-delete.php",
-				data: "delete-chapter=" + item,
-				dataType: "html",
-				success: function(data){
-					$(container).remove();
-					renumberOrder( '[id^="sort-"]', 1 );
-				}
-			});
-		}
-	);
-	$( "#sortable" ).sortable({ // sort items
-		activate: function(event, ui) { // highlight the dragged item
-			$( ui.item ).children().addClass("dragging");
-		},
-		deactivate: function(event, ui) { // turn off the highlight
-			$( ui.item ).children().removeClass("dragging");
-			renumberOrder( '[id^="sort-"]', 1 );
-		},
-		update: function() {
-			serial = $('#sortable').sortable('serialize');
-			$.ajax({
-				url: "ajax.sort.php",
-				type: "post",
-				data: serial,
-				success: function(data){
-					var obj = jQuery.parseJSON(data);
-				},
-				error: function(){
-					alert("AJAX error");
-				}
-			});
-		}
-	});
-	$( "#sortable" ).disableSelection();
-EOL;
-*/
-
-
-//$view->add_jquery_ui();
-//$view->add_inline_script($js_call);
 print( $view->close_view() );
